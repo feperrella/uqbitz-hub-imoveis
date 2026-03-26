@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: Portal Imóveis – Feed XML (OpenNavent)
+ * Plugin Name: Portal Imoveis - Feed XML (OpenNavent)
  * Plugin URI:  https://uqbitz.com/plugins/portal-imoveis
- * Description: Gera feed XML no formato OpenNavent para integração com portais imobiliários (ImovelWeb, Wimoveis, Casa Mineira).
+ * Description: Generates an OpenNavent XML feed to sync property listings with real estate portals (ImovelWeb, Wimoveis, Casa Mineira).
  * Version:     3.2.0
  * Author:      Fernando Perrella (UQBITZ)
  * Author URI:  https://uqbitz.com

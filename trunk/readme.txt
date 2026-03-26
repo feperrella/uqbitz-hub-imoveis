@@ -1,4 +1,4 @@
-=== Portal Imóveis – Feed XML (OpenNavent) ===
+=== Portal Imoveis - Feed XML (OpenNavent) ===
 Contributors: feperrella
 Tags: real-estate, xml, feed, property, opennavent
 Requires at least: 6.0
