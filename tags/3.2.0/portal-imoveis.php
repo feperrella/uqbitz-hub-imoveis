@@ -8,8 +8,9 @@
  * Author URI:  https://uqbitz.com
  * License:     GPL-2.0+
  * Text Domain: portal-imoveis
- * Requires at least: 6.0
+ * Requires at least: 6.5
  * Requires PHP: 8.0
+ * Requires Plugins: advanced-custom-fields
  */
 
 defined( 'ABSPATH' ) || exit;
