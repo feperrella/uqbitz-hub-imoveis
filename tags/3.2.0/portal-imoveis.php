@@ -3,7 +3,7 @@
  * Plugin Name: Portal Imóveis – Feed XML (OpenNavent)
  * Plugin URI:  https://uqbitz.com/plugins/portal-imoveis
  * Description: Gera feed XML no formato OpenNavent para integração com portais imobiliários (ImovelWeb, Wimoveis, Casa Mineira).
- * Version:     3.1.0
+ * Version:     3.2.0
  * Author:      Fernando Perrella (UQBITZ)
  * Author URI:  https://uqbitz.com
  * License:     GPL-2.0+
@@ -262,7 +262,7 @@ function ptim_rest_callback( $request ) {
     header( "Content-Type: application/xml; charset=utf-8" );
     header( "Cache-Control: public, max-age=3600" );
     header( "X-Robots-Tag: noindex, nofollow" );
-    echo ptim_generate_xml();
+    echo ptim_generate_xml(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- XML feed output
     exit;
 }
 
@@ -283,7 +283,7 @@ function ptim_serve_feed() {
     header( 'X-Robots-Tag: noindex, nofollow' );
 
     // Gerar e enviar
-    echo ptim_generate_xml();
+    echo ptim_generate_xml(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- XML feed output
     exit;
 }
 
@@ -1649,8 +1649,26 @@ function ptim_admin_menu() {
 
 add_action( 'admin_init', 'ptim_register_settings' );
 function ptim_register_settings() {
-    register_setting( 'ptim_settings_group', 'ptim_settings' );
+    register_setting( 'ptim_settings_group', 'ptim_settings', array( 'sanitize_callback' => 'ptim_sanitize_settings' ) );
 }
+
+function ptim_sanitize_settings( $input ) {
+    $sanitized = array();
+    if ( isset( $input['codigo_imobiliaria'] ) ) {
+        $sanitized['codigo_imobiliaria'] = sanitize_text_field( $input['codigo_imobiliaria'] );
+    }
+    if ( isset( $input['email_contato'] ) ) {
+        $sanitized['email_contato'] = sanitize_email( $input['email_contato'] );
+    }
+    if ( isset( $input['nome_contato'] ) ) {
+        $sanitized['nome_contato'] = sanitize_text_field( $input['nome_contato'] );
+    }
+    if ( isset( $input['telefone_contato'] ) ) {
+        $sanitized['telefone_contato'] = sanitize_text_field( $input['telefone_contato'] );
+    }
+    return $sanitized;
+}
+
 
 /* ── Página Principal: Visão Geral ── */
 function ptim_page_main() {
@@ -1685,12 +1703,12 @@ function ptim_page_main() {
     // Status
     echo '<h2>📊 Status do Feed</h2>';
     echo '<table class="widefat" style="max-width:500px">';
-    echo '<tr><td><strong>Imóveis publicados</strong></td><td>' . $total . '</td></tr>';
+    echo '<tr><td><strong>Imóveis publicados</strong></td><td>' . esc_html( $total ) . '</td></tr>';
     echo '<tr><td><strong>Sincronizando no feed</strong></td><td><span style="color:green;font-weight:bold">' . $valid . '</span></td></tr>';
     if ( count( $invalid ) > 0 ) {
         echo '<tr><td><strong>Com pendências</strong></td><td><span style="color:red;font-weight:bold">' . count( $invalid ) . '</span></td></tr>';
     }
-    echo '<tr><td><strong>Código da imobiliária</strong></td><td>' . ( $codigo ? '<code>' . esc_html( $codigo ) . '</code>' : '<span style="color:red">⚠️ Não configurado — <a href="' . admin_url( 'admin.php?page=ptim-settings' ) . '">preencher</a></span>' ) . '</td></tr>';
+    echo '<tr><td><strong>Código da imobiliária</strong></td><td>' . ( $codigo ? '<code>' . esc_html( $codigo ) . '</code>' : '<span style="color:red">⚠️ Não configurado — <a href="' . esc_url( admin_url( 'admin.php?page=ptim-settings' ) ) . '">preencher</a></span>' ) . '</td></tr>';
     echo '<tr><td><strong>URL do Feed XML</strong></td><td><code><a href="' . esc_url( $feed_url ) . '" target="_blank">' . esc_html( $feed_url ) . '</a></code></td></tr>';
     echo '</table>';
 
@@ -1699,7 +1717,7 @@ function ptim_page_main() {
     echo '<h2>📖 Como usar</h2>';
     echo '<div style="max-width:700px;background:#fff;border:1px solid #ccd0d4;padding:15px 20px;border-radius:4px">';
     echo '<h3 style="margin-top:0">1. Preencha as configurações</h3>';
-    echo '<p>Acesse <a href="' . admin_url( 'admin.php?page=ptim-settings' ) . '"><strong>Portal Imóveis → Configurações</strong></a> e preencha o código da imobiliária e dados de contato.</p>';
+    echo '<p>Acesse <a href="' . esc_url( admin_url( 'admin.php?page=ptim-settings' ) ) . '"><strong>Portal Imóveis → Configurações</strong></a> e preencha o código da imobiliária e dados de contato.</p>';
     echo '<h3>2. Cadastre os imóveis</h3>';
     echo '<p>Preencha todos os campos obrigatórios de cada imóvel (descrição com no mínimo 50 caracteres, pelo menos 5 fotos, preço, tipo, finalidade, CEP e área).</p>';
     echo '<p><strong>Importante:</strong></p>';
@@ -1727,9 +1745,9 @@ function ptim_page_main() {
         echo '<table class="widefat striped" style="max-width:800px">';
         echo '<thead><tr><th>Imóvel</th><th>Pendências</th><th>Ação</th></tr></thead><tbody>';
         foreach ( $invalid as $inv ) {
-            $edit_link = get_edit_post_link( $inv['id'] );
+            $edit_link = get_edit_post_link( esc_html( $inv['id'] ) );
             echo '<tr>';
-            echo '<td><strong>' . esc_html( $inv['title'] ) . '</strong><br><small>#' . $inv['id'] . '</small></td>';
+            echo '<td><strong>' . esc_html( $inv['title'] ) . '</strong><br><small>#' . esc_html( $inv['id'] ) . '</small></td>';
             echo '<td><ul style="margin:0">';
             foreach ( $inv['errors'] as $e ) {
                 echo '<li style="color:#d63638">❌ ' . esc_html( $e ) . '</li>';
@@ -1741,7 +1759,7 @@ function ptim_page_main() {
         echo '</tbody></table>';
     } else if ( $total > 0 ) {
         echo '<hr>';
-        echo '<p style="color:green;font-size:14px">✅ Todos os ' . $total . ' imóveis publicados estão com os campos obrigatórios preenchidos e sincronizando no feed.</p>';
+        echo '<p style="color:green;font-size:14px">✅ Todos os ' . esc_html( $total ) . ' imóveis publicados estão com os campos obrigatórios preenchidos e sincronizando no feed.</p>';
     }
 
     echo '</div>';
@@ -1768,10 +1786,10 @@ function ptim_page_settings() {
         $val = isset( $opts[ $key ] ) ? esc_attr( $opts[ $key ] ) : '';
         $req = $f['required'] ? ' <span style="color:red">*</span>' : '';
         echo '<tr>';
-        echo '<th scope="row"><label for="' . $key . '">' . $f['label'] . $req . '</label></th>';
+        echo '<th scope="row"><label for="' . esc_attr( $key ) . '">' . esc_html( $f['label'] ) . $req . '</label></th>';
         echo '<td>';
-        echo '<input type="text" id="' . $key . '" name="ptim_settings[' . $key . ']" value="' . $val . '" class="regular-text"' . ( $f['required'] ? ' required' : '' ) . ' />';
-        echo '<p class="description">' . $f['desc'] . '</p>';
+        echo '<input type="text" id="' . esc_attr( $key ) . '" name="ptim_settings[' . esc_attr( $key ) . ']" value="' . esc_attr( $val ) . '" class="regular-text"' . ( $f['required'] ? ' required' : '' ) . ' />';
+        echo '<p class="description">' . esc_html( $f['desc'] ) . '</p>';
         echo '</td></tr>';
     }
     echo '</table>';
@@ -1819,7 +1837,7 @@ function ptim_page_mapping() {
     );
     foreach ( $fields as $f ) {
         $req_style = ( strpos( $f[3], 'Sim' ) !== false ) ? 'color:#d63638;font-weight:bold' : '';
-        echo '<tr><td><strong>' . $f[0] . '</strong></td><td><code>' . $f[1] . '</code></td><td>' . $f[2] . '</td><td style="' . $req_style . '">' . $f[3] . '</td></tr>';
+        echo '<tr><td><strong>' . esc_html( $f[0] ) . '</strong></td><td><code>' . esc_html( $f[1] ) . '</code></td><td>' . esc_html( $f[2] ) . '</td><td style="' . esc_attr( $req_style ) . '">' . esc_html( $f[3] ) . '</td></tr>';
     }
     echo '</tbody></table>';
     echo '<p><small>* Pelo menos um preço (venda ou locação) é obrigatório.<br>** Condomínio obrigatório para Apartamento e Casa de Condomínio.</small></p>';
@@ -1835,7 +1853,7 @@ function ptim_page_mapping() {
     echo '<hr><h2>Estrutura XML</h2>';
     echo '<p>O feed segue o formato <strong>OpenNavent</strong>. Tags principais por imóvel:</p>';
     echo '<pre style="background:#f6f7f7;padding:15px;border:1px solid #ddd;max-width:600px;overflow-x:auto">';
-    echo htmlspecialchars('<Imovel>
+    echo esc_html('<Imovel>
   <codigoAnuncio>ID</codigoAnuncio>
   <titulo>Título (máx. 80 chars)</titulo>
   <descricao>Descrição (50–4000 chars)</descricao>

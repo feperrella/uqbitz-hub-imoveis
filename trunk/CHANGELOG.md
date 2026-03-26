@@ -5,6 +5,17 @@ Todas as mudanças notáveis do plugin Portal Imóveis serão documentadas neste
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 e este projeto segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [3.2.0] - 2026-03-26
+
+### Corrigido
+- Escaping de output HTML em todas as páginas admin (esc_html, esc_attr, esc_url)
+- Sanitização de inputs via callback em register_setting() (sanitize_text_field, sanitize_email)
+- htmlspecialchars() substituído por esc_html() (padrão WordPress)
+- readme.txt incluído na pasta do plugin (resolves "readme.txt does not exist")
+
+### Alterado
+- Plugin compatível com WordPress Plugin Check (PHPCS WordPress Coding Standards)
+
 ## [3.1.0] - 2026-03-26
 
 ### Adicionado
