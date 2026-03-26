@@ -1704,7 +1704,7 @@ function ptim_page_main() {
     echo '<h2>📊 Status do Feed</h2>';
     echo '<table class="widefat" style="max-width:500px">';
     echo '<tr><td><strong>Imóveis publicados</strong></td><td>' . esc_html( $total ) . '</td></tr>';
-    echo '<tr><td><strong>Sincronizando no feed</strong></td><td><span style="color:green;font-weight:bold">' . $valid . '</span></td></tr>';
+    echo '<tr><td><strong>Sincronizando no feed</strong></td><td><span style="color:green;font-weight:bold">' . esc_html( $valid ) . '</span></td></tr>';
     if ( count( $invalid ) > 0 ) {
         echo '<tr><td><strong>Com pendências</strong></td><td><span style="color:red;font-weight:bold">' . count( $invalid ) . '</span></td></tr>';
     }
@@ -1786,7 +1786,7 @@ function ptim_page_settings() {
         $val = isset( $opts[ $key ] ) ? esc_attr( $opts[ $key ] ) : '';
         $req = $f['required'] ? ' <span style="color:red">*</span>' : '';
         echo '<tr>';
-        echo '<th scope="row"><label for="' . esc_attr( $key ) . '">' . esc_html( $f['label'] ) . $req . '</label></th>';
+        echo '<th scope="row"><label for="' . esc_attr( $key ) . '">' . esc_html( $f['label'] ) . $req . '</label></th>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $req is static HTML
         echo '<td>';
         echo '<input type="text" id="' . esc_attr( $key ) . '" name="ptim_settings[' . esc_attr( $key ) . ']" value="' . esc_attr( $val ) . '" class="regular-text"' . ( $f['required'] ? ' required' : '' ) . ' />';
         echo '<p class="description">' . esc_html( $f['desc'] ) . '</p>';

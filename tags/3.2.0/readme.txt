@@ -1,153 +1,148 @@
 === Portal Imóveis – Feed XML (OpenNavent) ===
 Contributors: feperrella
-Tags: imoveis, xml, feed, real-estate, opennavent
+Tags: real-estate, xml, feed, property, opennavent
 Requires at least: 6.0
-Tested up to: 6.7
+Tested up to: 6.9
 Stable tag: 3.2.0
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Gera feed XML (OpenNavent) para integração com portais imobiliários: ImovelWeb, Wimoveis e Casa Mineira.
+Generates an OpenNavent XML feed to sync WordPress property listings with real estate portals (ImovelWeb, Wimoveis, Casa Mineira).
 
 == Description ==
 
-Plugin WordPress que gera automaticamente um feed XML no formato OpenNavent para sincronizar imóveis cadastrados no WordPress com os principais portais imobiliários do Brasil.
+Portal Imóveis is a WordPress plugin that automatically generates an XML feed in the OpenNavent format to synchronize property listings with major Brazilian real estate portals.
 
-**Portais suportados:**
+**Supported portals:**
 
 * ImovelWeb
 * Wimoveis
 * Casa Mineira
 
-**Funcionalidades principais:**
+**Key features:**
 
-* Feed XML automático em `/wp-json/portalimoveis/v1/feed`
-* Custom Post Type "Imóvel" com campos ACF completos
-* Taxonomias: Tipo do Imóvel, Finalidade, Cidade e Bairro
-* Validação de campos obrigatórios — imóveis incompletos são excluídos do feed
-* Painel administrativo com status do feed, instruções e mapeamento técnico
-* Mapeamento automático de amenidades e infraestrutura para IDs Navent
-* Suporte a vídeos YouTube (extração automática do código)
-* Suporte a plantas baixas com título personalizado
-* Preenchimento automático de endereço via CEP (ViaCEP)
-* Tipo e subtipo de propriedade com mapeamento completo para a API Navent
+* Automatic XML feed at `/wp-json/portalimoveis/v1/feed`
+* Custom Post Type "Imóvel" with full ACF field support
+* Taxonomies: Property Type, Purpose, City & Neighborhood
+* Required field validation — incomplete listings are excluded from the feed
+* Admin dashboard with feed status, instructions, and technical field mapping
+* Automatic amenity and infrastructure mapping to Navent IDs
+* YouTube video support (automatic code extraction)
+* Floor plan gallery with custom titles
+* Auto-fill address from ZIP code (via ViaCEP API)
+* Complete property type/subtype mapping to the Navent API
 
-**Campos obrigatórios validados:**
+**Validated required fields:**
 
-* Título (mín. 5 caracteres)
-* Descrição (mín. 50 caracteres)
-* Preço (venda ou locação)
-* Galeria de fotos (mín. 5 imagens)
-* Tipo e Finalidade
-* Endereço completo (CEP, Rua, Bairro, Cidade, Estado)
-* Área privativa (m²)
-* IPTU
-* Idade do imóvel
-* Condomínio (obrigatório para apartamentos e casas de condomínio)
+* Title (min. 5 characters)
+* Description (min. 50 characters)
+* Price (sale or rental)
+* Photo gallery (min. 5 images)
+* Type and Purpose
+* Full address (ZIP, street, neighborhood, city, state)
+* Private area (m²)
+* Property tax (IPTU)
+* Property age
+* Condo fee (required for apartments and gated communities)
 
 == Installation ==
 
-1. Faça upload da pasta `portal-imoveis` para `/wp-content/plugins/`
-2. Ative o plugin no painel do WordPress
-3. Acesse **Portal Imóveis → Configurações** e preencha:
-   * Código da Imobiliária (fornecido pelo portal)
-   * E-mail, nome e telefone de contato
-4. Cadastre imóveis preenchendo todos os campos obrigatórios
-5. Acesse **Portal Imóveis → Visão Geral** para verificar o status do feed
-6. Copie a URL do feed e cadastre no portal desejado
+1. Upload the `portal-imoveis` folder to `/wp-content/plugins/`
+2. Activate the plugin in the WordPress dashboard
+3. Go to **Portal Imóveis → Settings** and fill in:
+   * Real estate agency code (provided by the portal)
+   * Contact email, name, and phone
+4. Add property listings with all required fields filled in
+5. Go to **Portal Imóveis → Overview** to check feed status
+6. Copy the feed URL and register it in the desired portal
 
-**Configuração no portal (ImovelWeb):**
+**Portal setup (ImovelWeb):**
 
-1. Acesse o painel do ImovelWeb
-2. Vá em **Integração de Anúncios → XML**
-3. Cole a URL do feed
-4. Em "Nome do Integrador", coloque **UQBITZ**
-5. Salve
+1. Log in to the ImovelWeb dashboard
+2. Go to **Ad Integration → XML**
+3. Paste the feed URL
+4. In "Integrator Name", enter **UQBITZ**
+5. Save
 
 == Frequently Asked Questions ==
 
-= Quais são os requisitos? =
+= What are the requirements? =
 
-* WordPress 6.0 ou superior
-* PHP 8.0 ou superior
-* Plugin Advanced Custom Fields PRO instalado e ativo
+* WordPress 6.0 or higher
+* PHP 8.0 or higher
+* Advanced Custom Fields PRO plugin installed and active
 
-= Onde encontro a URL do feed? =
+= Where do I find the feed URL? =
 
-Acesse **Portal Imóveis → Visão Geral** no painel do WordPress. A URL é exibida no topo da página, no formato: `https://seusite.com.br/wp-json/portalimoveis/v1/feed`
+Go to **Portal Imóveis → Overview** in the WordPress dashboard. The URL is displayed at the top, in the format: `https://yoursite.com/wp-json/portalimoveis/v1/feed`
 
-= Por que um imóvel não aparece no feed? =
+= Why is a property not showing in the feed? =
 
-Imóveis com campos obrigatórios incompletos são automaticamente excluídos. Acesse **Portal Imóveis → Visão Geral** para ver a lista de pendências de cada imóvel.
+Properties with incomplete required fields are automatically excluded. Go to **Portal Imóveis → Overview** to see the list of issues for each property.
 
-= Posso usar em mais de um site? =
+= Can I use this on multiple sites? =
 
-Sim. Cada instalação do plugin gera seu próprio feed independente. Basta instalar, configurar o código da imobiliária e cadastrar os imóveis.
+Yes. Each plugin installation generates its own independent feed. Just install, configure the agency code, and add properties.
 
-= Como funciona o preenchimento automático pelo CEP? =
+= How does the ZIP code auto-fill work? =
 
-Ao digitar o CEP na edição de um imóvel, o plugin consulta a API ViaCEP e preenche automaticamente Rua, Bairro, Cidade e Estado.
+When you enter a ZIP code while editing a property, the plugin queries the ViaCEP API and automatically fills in street, neighborhood, city, and state.
 
-= Preciso de chave de API do portal? =
+= Do I need an API key from the portal? =
 
-Não para o feed XML. O feed é uma URL pública que o portal consome. Você só precisa do código da imobiliária fornecido pelo portal.
+No. The XML feed is a public URL consumed by the portal. You only need the agency code provided by the portal.
 
 == Screenshots ==
 
-1. Painel Visão Geral — status do feed com lista de imóveis e pendências
-2. Configurações — código da imobiliária e dados de contato
-3. Mapeamento — tabela técnica de campos ACF para XML
-4. Edição de imóvel — campos ACF organizados
+1. Overview dashboard — feed status with property list and pending issues
+2. Settings — agency code and contact information
+3. Field mapping — technical ACF to XML field reference table
+4. Property editing — organized ACF fields
 
 == Changelog ==
 
+= 3.2.0 =
+* Fixed: HTML output escaping on all admin pages (esc_html, esc_attr, esc_url)
+* Fixed: Input sanitization via register_setting() callback
+* Fixed: readme.txt included in plugin folder
+* Updated: WordPress Plugin Check compliant
+
 = 3.1.0 =
-* Validação expandida: IPTU, Idade, Condomínio (condicional), endereço completo obrigatórios
-* Layout otimizado: infraestrutura, galeria, plantas e vídeo em largura total
-* Infraestrutura com layout horizontal (items lado a lado)
-* Menu "Portal Imóveis" reposicionado abaixo do CPT Imóveis
-* Autor atualizado para distribuição
+* Added: Expanded validation — IPTU, property age, condo fee (conditional), full address required
+* Changed: Optimized layout — infrastructure, gallery, floor plans, video at full width
+* Changed: Infrastructure checkbox layout set to horizontal
+* Changed: "Portal Imóveis" menu repositioned below the Imóveis CPT
 
 = 3.0.0 =
-* Rebrand: plugin renomeado para "Portal Imóveis"
-* Namespace REST API alterado para `portalimoveis/v1`
-* Prefixo genérico `ptim_` para distribuição
-* Painel administrativo com 3 páginas: Visão Geral, Configurações, Mapeamento
-* Validação de campos obrigatórios no feed XML
+* Added: Admin dashboard with 3 pages: Overview, Settings, Field Mapping
+* Added: Required field validation in XML feed
+* Changed: Plugin rebranded from client-specific to generic "Portal Imóveis"
+* Changed: REST API namespace changed to `portalimoveis/v1`
 
 = 2.8.0 =
-* Campo Vídeo YouTube com extração automática de código
-* Campo Plantas (galeria de plantas baixas)
-* Instruções detalhadas nos campos ACF
+* Added: YouTube video field with automatic code extraction
+* Added: Floor plan gallery with custom titles
 
 = 2.7.0 =
-* IPTU, Condomínio e Idade incluídos no XML
-* Mapeamento de amenidades para IDs Navent (AREA_PRIVATIVA)
-* Mapeamento de infraestrutura para IDs Navent (AREAS_COMUNS)
-* Campo Complemento no endereço
+* Added: IPTU, condo fee, and property age in XML characteristics
+* Added: Amenity mapping to Navent AREA_PRIVATIVA IDs
+* Added: Infrastructure mapping to Navent AREAS_COMUNS IDs
 
 = 2.5.0 =
-* Migração de características: IDs numéricos convertidos para labels em português
-* 82 mapeamentos de características Navent
-* Atualização das choices ACF para amenidades (30) e infraestrutura (55)
+* Added: 82 Navent characteristic mappings (numeric IDs to Portuguese labels)
 
 = 2.4.0 =
-* CPT e taxonomias registrados via código do plugin (não mais via ACF)
-* Taxonomia Tipo com hierarquia completa (5 tipos, 40 subtipos)
-
-= 2.1.0 =
-* Mapeamento completo tipo/subtipo para API Navent (40 slugs)
+* Added: CPT and taxonomies registered via plugin code
+* Added: Complete type hierarchy (5 types, 40 subtypes)
 
 = 2.0.0 =
-* Reescrita completa como plugin single-file
-* Feed XML via REST API
-* Suporte a venda e locação
+* Initial release: single-file plugin rewrite with REST API XML feed
 
 == Upgrade Notice ==
 
-= 3.1.0 =
-Validação expandida e layout otimizado. Verifique se todos os imóveis têm IPTU, Idade e endereço completo preenchidos.
+= 3.2.0 =
+Security improvements: output escaping and input sanitization. Recommended update.
 
 = 3.0.0 =
-URL do feed alterada para `/wp-json/portalimoveis/v1/feed`. Atualize a URL no portal.
+Feed URL changed to `/wp-json/portalimoveis/v1/feed`. Update the URL in your portal.
