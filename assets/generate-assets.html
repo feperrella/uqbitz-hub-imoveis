@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>UQBITZ Hub Imóveis — Asset Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1a1a2e; font-family: 'Inter', sans-serif; color: #fff; padding: 40px; }
+
+  h2 { color: #94a3b8; margin: 40px 0 12px; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; }
+  h2:first-of-type { margin-top: 0; }
+  .hint { color: #64748b; font-size: 12px; margin-bottom: 16px; }
+
+  /* ── Shared banner base ── */
+  .banner {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  }
+  .banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 15% 50%, rgba(59,130,246,0.12) 0%, transparent 50%),
+      radial-gradient(circle at 85% 50%, rgba(16,185,129,0.08) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  /* Grid pattern overlay */
+  .banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .banner-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 8%;
+    gap: 5%;
+  }
+
+  /* Icon cluster */
+  .icon-cluster {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* House icon (SVG inline) */
+  .house-icon {
+    filter: drop-shadow(0 0 20px rgba(59,130,246,0.4));
+  }
+
+  /* Code icon */
+  .code-icon {
+    filter: drop-shadow(0 0 12px rgba(16,185,129,0.5));
+  }
+
+  /* Text block */
+  .text-block { flex: 1; }
+
+  .plugin-name {
+    font-weight: 800;
+    color: #f8fafc;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .plugin-name span {
+    background: linear-gradient(135deg, #3b82f6, #10b981);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .tagline {
+    color: #94a3b8;
+    margin-top: 6px;
+    font-weight: 400;
+  }
+
+  /* Portal badges */
+  .portals {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  .portal-badge {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #cbd5e1;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .portal-dot {
+    color: #475569;
+    font-size: 10px;
+  }
+
+  /* Format badge */
+  .format-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(59,130,246,0.15));
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #10b981;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-top: 10px;
+  }
+
+  /* ── Banner 1544x500 ── */
+  .banner-large {
+    width: 1544px;
+    height: 500px;
+  }
+  .banner-large .house-icon { width: 160px; height: 176px; }
+  .banner-large .plugin-name { font-size: 56px; }
+  .banner-large .tagline { font-size: 22px; }
+  .banner-large .portals { margin-top: 20px; gap: 10px; }
+  .banner-large .portal-badge { font-size: 14px; padding: 6px 16px; border-radius: 8px; }
+  .banner-large .format-badge { font-size: 12px; padding: 5px 16px; margin-top: 14px; }
+  .banner-large .icon-cluster { gap: 20px; }
+
+  /* ── Banner 772x250 ── */
+  .banner-small {
+    width: 772px;
+    height: 250px;
+  }
+  .banner-small .house-icon { width: 90px; height: 99px; }
+  .banner-small .plugin-name { font-size: 30px; }
+  .banner-small .tagline { font-size: 13px; margin-top: 4px; }
+  .banner-small .portals { margin-top: 10px; gap: 6px; }
+  .banner-small .portal-badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; }
+  .banner-small .format-badge { font-size: 9px; padding: 2px 10px; margin-top: 8px; }
+
+  /* ── Icons ── */
+  .icon-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-radius: 22%;
+    position: relative;
+    overflow: hidden;
+  }
+  .icon-box::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .icon-box svg {
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  }
+
+  .icon-256 { width: 256px; height: 256px; }
+  .icon-128 { width: 128px; height: 128px; }
+
+  .icons-row { display: flex; gap: 24px; align-items: flex-end; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     BANNER 1544×500 (hi-res)
+     ═══════════════════════════════════════════ -->
+<h2>Banner 1544 x 500</h2>
+<p class="hint">Right-click → Save as image, or screenshot this element at exactly 1544×500</p>
+
+<div class="banner banner-large" id="banner-large">
+  <div class="banner-content">
+    <div class="icon-cluster">
+      <!-- Option D: Building + House + sync loop -->
+      <svg class="house-icon" viewBox="0 0 200 210" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Sync arcs -->
+        <path d="M145 30a80 80 0 0 1 30 65" stroke="#10b981" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.8"/>
+        <path d="M175 95l2-14 12 5" stroke="#10b981" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+        <path d="M55 162a80 80 0 0 1-30-65" stroke="#10b981" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.8"/>
+        <path d="M25 97l-2 14-12-5" stroke="#10b981" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+        <path d="M55 30a80 80 0 0 0-30 65" stroke="#60a5fa" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.25"/>
+        <path d="M145 162a80 80 0 0 0 30-65" stroke="#60a5fa" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.25"/>
+        <!-- Building -->
+        <rect x="56" y="48" width="52" height="100" rx="3" fill="#3b82f6" fill-opacity="0.6"/>
+        <rect x="64" y="56" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="84" y="56" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="64" y="74" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="84" y="74" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="64" y="92" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="84" y="92" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="64" y="110" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="84" y="110" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="74" y="130" width="16" height="18" rx="2" fill="#60a5fa" opacity="0.3"/>
+        <!-- House -->
+        <path d="M125 92L95 116h60L125 92z" fill="#93c5fd" opacity="0.9"/>
+        <rect x="100" y="116" width="50" height="36" fill="#3b82f6" fill-opacity="0.85"/>
+        <rect x="130" y="122" width="12" height="10" rx="2" fill="#93c5fd" opacity="0.4"/>
+        <rect x="108" y="132" width="14" height="20" rx="2" fill="#1e40af" opacity="0.6"/>
+        <circle cx="119" cy="143" r="1.8" fill="#93c5fd" opacity="0.5"/>
+        <!-- SYNC -->
+        <text x="100" y="198" text-anchor="middle" fill="#10b981" font-family="Inter,sans-serif" font-size="22" font-weight="700" letter-spacing="4" opacity="0.7">SYNC</text>
+      </svg>
+    </div>
+    <div class="text-block">
+      <div class="plugin-name"><span>UQBITZ</span> Hub Imóveis</div>
+      <div class="tagline">Hub de Integração Imobiliária — Feed XML para portais</div>
+      <div class="portals">
+        <span class="portal-badge">ImovelWeb</span>
+        <span class="portal-badge">Wimoveis</span>
+        <span class="portal-badge">Casa Mineira</span>
+      </div>
+      <div class="format-badge">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M4 1h8a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V2a1 1 0 011-1zm1 3v2h6V4H5zm0 4v1h4V8H5z"/></svg>
+        formato OpenNavent
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     BANNER 772×250 (standard)
+     ═══════════════════════════════════════════ -->
+<h2>Banner 772 x 250</h2>
+<p class="hint">Right-click → Save as image, or screenshot at exactly 772×250</p>
+
+<div class="banner banner-small" id="banner-small">
+  <div class="banner-content">
+    <div class="icon-cluster">
+      <svg class="house-icon" viewBox="0 0 200 210" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Sync arcs -->
+        <path d="M145 30a80 80 0 0 1 30 65" stroke="#10b981" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.8"/>
+        <path d="M175 95l2-14 12 5" stroke="#10b981" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+        <path d="M55 162a80 80 0 0 1-30-65" stroke="#10b981" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.8"/>
+        <path d="M25 97l-2 14-12-5" stroke="#10b981" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+        <path d="M55 30a80 80 0 0 0-30 65" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.25"/>
+        <path d="M145 162a80 80 0 0 0 30-65" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.25"/>
+        <!-- Building -->
+        <rect x="56" y="48" width="52" height="100" rx="3" fill="#3b82f6" fill-opacity="0.6"/>
+        <rect x="64" y="56" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="84" y="56" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="64" y="74" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="84" y="74" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="64" y="92" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="84" y="92" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="64" y="110" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="84" y="110" width="12" height="10" rx="1.5" fill="#93c5fd" opacity="0.4"/>
+        <rect x="74" y="130" width="16" height="18" rx="2" fill="#60a5fa" opacity="0.3"/>
+        <!-- House -->
+        <path d="M125 92L95 116h60L125 92z" fill="#93c5fd" opacity="0.9"/>
+        <rect x="100" y="116" width="50" height="36" fill="#3b82f6" fill-opacity="0.85"/>
+        <rect x="130" y="122" width="12" height="10" rx="2" fill="#93c5fd" opacity="0.4"/>
+        <rect x="108" y="132" width="14" height="20" rx="2" fill="#1e40af" opacity="0.6"/>
+        <circle cx="119" cy="143" r="1.8" fill="#93c5fd" opacity="0.5"/>
+        <!-- SYNC -->
+        <text x="100" y="198" text-anchor="middle" fill="#10b981" font-family="Inter,sans-serif" font-size="22" font-weight="700" letter-spacing="4" opacity="0.7">SYNC</text>
+      </svg>
+    </div>
+    <div class="text-block">
+      <div class="plugin-name"><span>UQBITZ</span> Hub Imóveis</div>
+      <div class="tagline">Hub de Integração Imobiliária — Feed XML para portais</div>
+      <div class="portals">
+        <span class="portal-badge">ImovelWeb</span>
+        <span class="portal-badge">Wimoveis</span>
+        <span class="portal-badge">Casa Mineira</span>
+      </div>
+      <div class="format-badge">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M4 1h8a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V2a1 1 0 011-1zm1 3v2h6V4H5zm0 4v1h4V8H5z"/></svg>
+        formato OpenNavent
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     ICONS
+     ═══════════════════════════════════════════ -->
+<h2>Icons — Prédio + Casa + Sync</h2>
+<p class="hint">Screenshot each square individually, or use the download buttons below</p>
+
+<div class="icons-row">
+  <div>
+    <div class="icon-box icon-256" id="icon-D-256">
+      <svg width="180" height="180" viewBox="0 0 200 210" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Sync arcs -->
+        <path d="M145 30a80 80 0 0 1 30 65" stroke="#10b981" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.7"/>
+        <path d="M175 95l2-14 12 5" stroke="#10b981" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+        <path d="M55 162a80 80 0 0 1-30-65" stroke="#10b981" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.7"/>
+        <path d="M25 97l-2 14-12-5" stroke="#10b981" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+        <path d="M55 30a80 80 0 0 0-30 65" stroke="white" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.2"/>
+        <path d="M145 162a80 80 0 0 0 30-65" stroke="white" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.2"/>
+
+        <!-- Building (taller, left, behind) -->
+        <rect x="56" y="48" width="52" height="100" rx="3" fill="white" fill-opacity="0.75"/>
+        <!-- Building windows (3 rows x 2 cols) -->
+        <rect x="64" y="56" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="84" y="56" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="64" y="74" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="84" y="74" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="64" y="92" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="84" y="92" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="64" y="110" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="84" y="110" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <!-- Building door -->
+        <rect x="74" y="130" width="16" height="18" rx="2" fill="#2563eb" opacity="0.3"/>
+
+        <!-- House (right, in front, slightly lower, more overlap) -->
+        <path d="M125 92L95 116h60L125 92z" fill="#e2e8f0"/>
+        <rect x="100" y="116" width="50" height="36" fill="white" fill-opacity="0.95"/>
+        <rect x="130" y="122" width="12" height="10" rx="2" fill="#2563eb" opacity="0.35"/>
+        <rect x="108" y="132" width="14" height="20" rx="2" fill="#1e40af" opacity="0.5"/>
+        <circle cx="119" cy="143" r="1.8" fill="white" opacity="0.5"/>
+
+        <!-- SYNC text -->
+        <text x="100" y="198" text-anchor="middle" fill="white" font-family="Inter,sans-serif" font-size="22" font-weight="700" letter-spacing="6" opacity="0.6">SYNC</text>
+      </svg>
+    </div>
+    <p class="hint" style="margin-top:8px">256 x 256</p>
+  </div>
+  <div>
+    <div class="icon-box icon-128" id="icon-D-128">
+      <svg width="90" height="90" viewBox="0 0 200 210" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Sync arcs -->
+        <path d="M145 30a80 80 0 0 1 30 65" stroke="#10b981" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.7"/>
+        <path d="M175 95l2-14 12 5" stroke="#10b981" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+        <path d="M55 162a80 80 0 0 1-30-65" stroke="#10b981" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.7"/>
+        <path d="M25 97l-2 14-12-5" stroke="#10b981" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+        <path d="M55 30a80 80 0 0 0-30 65" stroke="white" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.2"/>
+        <path d="M145 162a80 80 0 0 0 30-65" stroke="white" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.2"/>
+
+        <!-- Building -->
+        <rect x="56" y="48" width="52" height="100" rx="3" fill="white" fill-opacity="0.75"/>
+        <rect x="64" y="56" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="84" y="56" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="64" y="74" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="84" y="74" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="64" y="92" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="84" y="92" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="64" y="110" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="84" y="110" width="12" height="10" rx="1.5" fill="#2563eb" opacity="0.35"/>
+        <rect x="74" y="130" width="16" height="18" rx="2" fill="#2563eb" opacity="0.3"/>
+
+        <!-- House -->
+        <path d="M125 92L95 116h60L125 92z" fill="#e2e8f0"/>
+        <rect x="100" y="116" width="50" height="36" fill="white" fill-opacity="0.95"/>
+        <rect x="130" y="122" width="12" height="10" rx="2" fill="#2563eb" opacity="0.35"/>
+        <rect x="108" y="132" width="14" height="20" rx="2" fill="#1e40af" opacity="0.5"/>
+        <circle cx="119" cy="143" r="2.5" fill="white" opacity="0.5"/>
+
+        <!-- SYNC text -->
+        <text x="100" y="198" text-anchor="middle" fill="white" font-family="Inter,sans-serif" font-size="24" font-weight="700" letter-spacing="6" opacity="0.6">SYNC</text>
+      </svg>
+    </div>
+    <p class="hint" style="margin-top:8px">128 x 128</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     AUTO-DOWNLOAD SCRIPT (html2canvas)
+     ═══════════════════════════════════════════ -->
+<h2 style="margin-top:60px">Auto-Export</h2>
+<p class="hint">Click a button to download the PNG at the correct resolution.</p>
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+  <button onclick="capture('banner-large', 'banner-1544x500.png', 1544, 500)">Download banner-1544x500.png</button>
+  <button onclick="capture('banner-small', 'banner-772x250.png', 772, 250)">Download banner-772x250.png</button>
+</div>
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+  <button onclick="captureIcon('D')">Download icon-256x256.png + icon-128x128.png</button>
+  <button onclick="downloadAll()" style="background:linear-gradient(135deg,#10b981,#059669)">Download All</button>
+</div>
+
+<style>
+  button {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  button:hover { opacity: 0.85; }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+async function capture(id, filename, w, h) {
+  const el = document.getElementById(id);
+  const canvas = await html2canvas(el, {
+    width: w,
+    height: h,
+    scale: 1,
+    useCORS: true,
+    backgroundColor: null,
+  });
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+async function captureIcon(letter) {
+  await capture('icon-' + letter + '-256', 'icon-256x256.png', 256, 256);
+  await new Promise(r => setTimeout(r, 500));
+  await capture('icon-' + letter + '-128', 'icon-128x128.png', 128, 128);
+}
+
+async function downloadAll() {
+  await capture('banner-large', 'banner-1544x500.png', 1544, 500);
+  await new Promise(r => setTimeout(r, 500));
+  await capture('banner-small', 'banner-772x250.png', 772, 250);
+  await new Promise(r => setTimeout(r, 500));
+  await captureIcon('D');
+}
+</script>
+
+</body>
+</html>
