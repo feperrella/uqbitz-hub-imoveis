@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<ruleset name="UQBITZ Hub Imóveis">
+	<description>WordPress Coding Standards for uqbitz-hub-imoveis plugin.</description>
+
+	<!-- Scan only PHP files -->
+	<arg name="extensions" value="php"/>
+
+	<!-- Show colors and progress -->
+	<arg name="colors"/>
+	<arg value="sp"/>
+
+	<!-- Scan trunk directory -->
+	<file>./trunk</file>
+
+	<!-- Exclude vendor and node_modules -->
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+
+	<!-- Use WordPress standards -->
+	<rule ref="WordPress"/>
+
+	<!-- Plugin text domain -->
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="uqbitz-hub-imoveis"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Custom prefix for functions, classes, constants -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="uqbhi_"/>
+				<element value="UQBHI_"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Minimum supported PHP and WP versions -->
+	<config name="minimum_wp_version" value="6.0"/>
+	<config name="testVersion" value="7.4-"/>
+
+	<!-- PHP Compatibility -->
+	<rule ref="PHPCompatibilityWP"/>
+</ruleset>

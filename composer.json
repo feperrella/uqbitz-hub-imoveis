@@ -1,0 +1,17 @@
+{
+	"name": "uqbitz/hub-imoveis",
+	"description": "UQBITZ Hub de Integração Imobiliária",
+	"type": "wordpress-plugin",
+	"require-dev": {
+		"wp-coding-standards/wpcs": "^3.0",
+		"phpcompatibility/phpcompatibility-wp": "*",
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+		"php-stubs/wordpress-stubs": "^6.9",
+		"php-stubs/acf-pro-stubs": "^6.5"
+	},
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	}
+}
