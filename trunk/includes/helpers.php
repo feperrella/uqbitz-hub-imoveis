@@ -266,7 +266,7 @@ function uqbhi_validate_imovel( $post_id ) {
 
 	$sell = get_field( 'sell_price', $post_id );
 	$rent = get_field( 'rent_price', $post_id );
-	if ( empty( $sell ) && empty( $rent ) ) {
+	if ( ! uqbhi_has_value( $sell ) && ! uqbhi_has_value( $rent ) ) {
 		$errors[] = 'Preço de venda ou locação obrigatório';
 	}
 
@@ -305,17 +305,17 @@ function uqbhi_validate_imovel( $post_id ) {
 		$errors[] = 'Estado não preenchido';
 	}
 
-	if ( empty( get_field( 'metreage', $post_id ) ) ) {
+	if ( ! uqbhi_has_value( get_field( 'metreage', $post_id ) ) ) {
 		$errors[] = 'Área privativa (m²) não preenchida';
 	}
 
 	// IPTU (importante para posicionamento).
-	if ( empty( get_field( 'iptu', $post_id ) ) ) {
+	if ( ! uqbhi_has_value( get_field( 'iptu', $post_id ) ) ) {
 		$errors[] = 'IPTU não preenchido';
 	}
 
 	// Idade do imóvel.
-	if ( empty( get_field( 'idade', $post_id ) ) ) {
+	if ( ! uqbhi_has_value( get_field( 'idade', $post_id ) ) ) {
 		$errors[] = 'Idade do imóvel não preenchida';
 	}
 
@@ -330,9 +330,29 @@ function uqbhi_validate_imovel( $post_id ) {
 				break; }
 		}
 	}
-	if ( $needs_condo && empty( get_field( 'condominium', $post_id ) ) ) {
+	if ( $needs_condo && ! uqbhi_has_value( get_field( 'condominium', $post_id ) ) ) {
 		$errors[] = 'Condomínio obrigatório para este tipo de imóvel';
 	}
 
 	return $errors;
+}
+
+/**
+ * Check whether a field has a meaningful value.
+ *
+ * Accepts numeric zero as a valid value.
+ *
+ * @param mixed $value Field value.
+ * @return bool
+ */
+function uqbhi_has_value( $value ) {
+	if ( is_array( $value ) ) {
+		return ! empty( $value );
+	}
+
+	if ( is_string( $value ) ) {
+		return trim( $value ) !== '';
+	}
+
+	return null !== $value;
 }

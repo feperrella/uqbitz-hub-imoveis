@@ -214,14 +214,14 @@ function uqbhi_render_imovel( $post ) {
 
 	// Preços.
 	$x .= '      <precos>' . "\n";
-	if ( $sell_price ) {
+	if ( uqbhi_has_value( $sell_price ) ) {
 		$x .= '        <preco>' . "\n";
 		$x .= '          <quantidade>' . uqbhi_cdata( intval( $sell_price ) ) . '</quantidade>' . "\n";
 		$x .= '          <moeda>' . uqbhi_cdata( 'BRL' ) . '</moeda>' . "\n";
 		$x .= '          <operacao>' . uqbhi_cdata( 'VENTA' ) . '</operacao>' . "\n";
 		$x .= '        </preco>' . "\n";
 	}
-	if ( $rent_price ) {
+	if ( uqbhi_has_value( $rent_price ) ) {
 		$x .= '        <preco>' . "\n";
 		$x .= '          <quantidade>' . uqbhi_cdata( intval( $rent_price ) ) . '</quantidade>' . "\n";
 		$x .= '          <moeda>' . uqbhi_cdata( 'BRL' ) . '</moeda>' . "\n";
@@ -334,30 +334,30 @@ function uqbhi_render_imovel( $post ) {
 
 	// Características.
 	$x .= '      <caracteristicas>' . "\n";
-	if ( $rooms ) {
+	if ( uqbhi_has_value( $rooms ) ) {
 		$x .= '        <caracteristica><id>' . uqbhi_cdata( 'CFT2' ) . '</id><nome>' . uqbhi_cdata( 'PRINCIPALES|QUARTO' ) . '</nome><valor>' . uqbhi_cdata( intval( $rooms ) ) . '</valor></caracteristica>' . "\n";
 	}
-	if ( $suits ) {
+	if ( uqbhi_has_value( $suits ) ) {
 		$x .= '        <caracteristica><id>' . uqbhi_cdata( 'CFT4' ) . '</id><nome>' . uqbhi_cdata( 'PRINCIPALES|SUITE' ) . '</nome><valor>' . uqbhi_cdata( intval( $suits ) ) . '</valor></caracteristica>' . "\n";
 	}
-	if ( $bathroom ) {
+	if ( uqbhi_has_value( $bathroom ) ) {
 		$x .= '        <caracteristica><id>' . uqbhi_cdata( 'CFT3' ) . '</id><nome>' . uqbhi_cdata( 'PRINCIPALES|BANHEIRO' ) . '</nome><valor>' . uqbhi_cdata( intval( $bathroom ) ) . '</valor></caracteristica>' . "\n";
 	}
-	if ( $metreage ) {
+	if ( uqbhi_has_value( $metreage ) ) {
 		$x .= '        <caracteristica><id>' . uqbhi_cdata( 'CFT101' ) . '</id><nome>' . uqbhi_cdata( 'MEDIDAS|AREA_UTIL' ) . '</nome><valor>' . uqbhi_cdata( intval( $metreage ) ) . '</valor></caracteristica>' . "\n";
 		$x .= '        <caracteristica><id>' . uqbhi_cdata( 'CFT100' ) . '</id><nome>' . uqbhi_cdata( 'MEDIDAS|AREA_TOTAL' ) . '</nome><valor>' . uqbhi_cdata( intval( $metreage ) ) . '</valor></caracteristica>' . "\n";
 		$x .= '        <caracteristica><id>' . uqbhi_cdata( 'CON1' ) . '</id><nome>' . uqbhi_cdata( 'MEDIDAS|UNIDAD_DE_MEDIDA' ) . '</nome><idValor>' . uqbhi_cdata( 'M2' ) . '</idValor></caracteristica>' . "\n";
 	}
-	if ( $parking ) {
+	if ( uqbhi_has_value( $parking ) ) {
 		$x .= '        <caracteristica><id>' . uqbhi_cdata( 'CFT7' ) . '</id><nome>' . uqbhi_cdata( 'PRINCIPALES|VAGA' ) . '</nome><valor>' . uqbhi_cdata( intval( $parking ) ) . '</valor></caracteristica>' . "\n";
 	}
-	if ( $iptu ) {
+	if ( uqbhi_has_value( $iptu ) ) {
 		$x .= '        <caracteristica><id>' . uqbhi_cdata( 'CFT400' ) . '</id><nome>' . uqbhi_cdata( 'PRINCIPALES|IPTU' ) . '</nome><valor>' . uqbhi_cdata( intval( $iptu ) ) . '</valor></caracteristica>' . "\n";
 	}
-	if ( $condominium ) {
+	if ( uqbhi_has_value( $condominium ) ) {
 		$x .= '        <caracteristica><id>' . uqbhi_cdata( 'CFT6' ) . '</id><nome>' . uqbhi_cdata( 'PRINCIPALES|CONDOMINIO' ) . '</nome><valor>' . uqbhi_cdata( intval( $condominium ) ) . '</valor></caracteristica>' . "\n";
 	}
-	if ( $idade ) {
+	if ( uqbhi_has_value( $idade ) ) {
 		$x .= '        <caracteristica><id>' . uqbhi_cdata( 'CFT5' ) . '</id><nome>' . uqbhi_cdata( 'PRINCIPALES|IDADE' ) . '</nome><valor>' . uqbhi_cdata( intval( $idade ) ) . '</valor></caracteristica>' . "\n";
 	}
 
