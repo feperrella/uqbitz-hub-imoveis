@@ -214,6 +214,111 @@ function uqbhi_get_operacao( $post_id ) {
 }
 
 /**
+ * Map a single `uqbhi_finalidade` term to the operations it authorises.
+ *
+ * Unlike uqbhi_get_operacao(), this never guesses: a term it cannot recognise
+ * yields an empty array so the caller can fall back instead of silently
+ * restricting the property. It also returns a set, because a single term may
+ * authorise both operations (e.g. "Venda e Locação").
+ *
+ * @param WP_Term $term Term from `uqbhi_finalidade`.
+ * @return string[] Subset of VENTA / ALQUILER. Empty when unrecognised.
+ */
+function uqbhi_map_finalidade_term( $term ) {
+	$op = get_term_meta( $term->term_id, 'uqbhi_opennavent', true );
+	if ( 'ALQUILER' === $op || 'VENTA' === $op ) {
+		return array( $op );
+	}
+
+	// Inherit from an ancestor, mirroring uqbhi_get_tipo().
+	$walker = $term;
+	$guard  = 0;
+	while ( ! empty( $walker->parent ) && $guard < 10 ) {
+		++$guard;
+		$walker = get_term( $walker->parent, 'uqbhi_finalidade' );
+		if ( ! $walker || is_wp_error( $walker ) ) {
+			break;
+		}
+		$herdado = get_term_meta( $walker->term_id, 'uqbhi_opennavent', true );
+		if ( 'ALQUILER' === $herdado || 'VENTA' === $herdado ) {
+			return array( $herdado );
+		}
+	}
+
+	// Name heuristic. Both lists are tested: stopping at the first match would
+	// map "Venda e Locação" to rental only and drop a legitimate sale.
+	$nome = strtolower( $term->name );
+	$ops  = array();
+	foreach ( array( 'alug', 'loca', 'alqu', 'rent' ) as $needle ) {
+		if ( false !== strpos( $nome, $needle ) ) {
+			$ops[] = 'ALQUILER';
+			break;
+		}
+	}
+	foreach ( array( 'venda', 'vend', 'vent', 'sale', 'sell' ) as $needle ) {
+		if ( false !== strpos( $nome, $needle ) ) {
+			$ops[] = 'VENTA';
+			break;
+		}
+	}
+
+	return $ops;
+}
+
+/**
+ * Operations authorised by a property's `uqbhi_finalidade` terms.
+ *
+ * @param int $post_id The property post ID.
+ * @return string[] Subset of VENTA / ALQUILER. Empty when the finalidade is
+ *                  missing or none of its terms could be mapped.
+ */
+function uqbhi_get_operacoes( $post_id ) {
+	$terms = wp_get_post_terms( $post_id, 'uqbhi_finalidade' );
+	if ( empty( $terms ) || is_wp_error( $terms ) ) {
+		return array();
+	}
+
+	$ops = array();
+	foreach ( $terms as $term ) {
+		$ops = array_merge( $ops, uqbhi_map_finalidade_term( $term ) );
+	}
+
+	return array_values( array_unique( $ops ) );
+}
+
+/**
+ * Operations a property actually publishes: priced AND authorised.
+ *
+ * The finalidade governs which `<preco>` blocks are emitted, but only as a
+ * filter over the prices that are filled in — so this is always a subset of
+ * what the price fields alone would produce. When the finalidade cannot be
+ * determined, it falls back to the price-driven behaviour rather than
+ * restricting the property on a guess.
+ *
+ * @param int $post_id The property post ID.
+ * @return string[] Subset of VENTA / ALQUILER.
+ */
+function uqbhi_get_operacoes_publicaveis( $post_id ) {
+	// uqbhi_has_price e não uqbhi_has_value: um imóvel sem finalidade cai no
+	// fallback abaixo, e com has_value um rent_price de "0" viraria anúncio de
+	// locação a R$ 0 — que o OpenNavent recusa no Brasil.
+	$atual = array();
+	if ( uqbhi_has_price( get_field( 'sell_price', $post_id ) ) ) {
+		$atual[] = 'VENTA';
+	}
+	if ( uqbhi_has_price( get_field( 'rent_price', $post_id ) ) ) {
+		$atual[] = 'ALQUILER';
+	}
+
+	$permitido = uqbhi_get_operacoes( $post_id );
+	if ( empty( $permitido ) ) {
+		return $atual;
+	}
+
+	return array_values( array_intersect( $atual, $permitido ) );
+}
+
+/**
  * Clean text for XML output — decode entities, strip tags, normalize whitespace.
  *
  * @param string $text Raw text to clean.
@@ -485,6 +590,10 @@ function uqbhi_validate_imovel( $post_id ) {
 		} else {
 			$errors[] = 'Preço de venda ou locação obrigatório (maior que zero)';
 		}
+	} elseif ( empty( uqbhi_get_operacoes_publicaveis( $post_id ) ) ) {
+		// Há preço válido, mas nenhum que a finalidade autorize — publicar assim
+		// geraria um anúncio sem preço no portal.
+		$errors[] = 'Preço preenchido não corresponde à finalidade selecionada';
 	}
 
 	$gallery   = get_field( 'galeria_de_imagens', $post_id );

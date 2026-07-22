@@ -214,6 +214,9 @@ function uqbhi_render_imovel( $post ) {
 	// Tipo de propriedade.
 	$tipo = uqbhi_get_tipo( $id );
 
+	// Operações publicáveis: preço válido E autorizado pela finalidade.
+	$ops_publicaveis = uqbhi_get_operacoes_publicaveis( $id );
+
 	// Localidade no formato: Bairro,Cidade,Estado,País.
 	$loc_parts  = uqbhi_get_localizacao_parts( $id );
 	$localidade = uqbhi_build_localidade( $loc_parts );
@@ -250,14 +253,14 @@ function uqbhi_render_imovel( $post ) {
 
 	// Preços.
 	$x .= '      <precos>' . "\n";
-	if ( uqbhi_has_price( $sell_price ) ) {
+	if ( in_array( 'VENTA', $ops_publicaveis, true ) ) {
 		$x .= '        <preco>' . "\n";
 		$x .= '          <quantidade>' . uqbhi_cdata( intval( $sell_price ) ) . '</quantidade>' . "\n";
 		$x .= '          <moeda>' . uqbhi_cdata( 'BRL' ) . '</moeda>' . "\n";
 		$x .= '          <operacao>' . uqbhi_cdata( 'VENTA' ) . '</operacao>' . "\n";
 		$x .= '        </preco>' . "\n";
 	}
-	if ( uqbhi_has_price( $rent_price ) ) {
+	if ( in_array( 'ALQUILER', $ops_publicaveis, true ) ) {
 		$x .= '        <preco>' . "\n";
 		$x .= '          <quantidade>' . uqbhi_cdata( intval( $rent_price ) ) . '</quantidade>' . "\n";
 		$x .= '          <moeda>' . uqbhi_cdata( 'BRL' ) . '</moeda>' . "\n";

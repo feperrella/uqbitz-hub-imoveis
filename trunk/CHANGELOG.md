@@ -11,6 +11,10 @@ e este projeto segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **Erro "o imóvel não tem uma cidade válida / localização válida":** o estado era fixo como `São Paulo` na tag `<localidade>`, ignorando o campo ACF `estado`. Imóveis de outros estados eram enviados com a localização errada. Agora o estado real é usado, com normalização de UF (`PR`) para nome por extenso (`Paraná`)
 - `<localidade>` não é mais montada com `array_filter`, que deslocava as posições `Bairro,Cidade,Estado,País` quando uma parte estava vazia; vírgulas dentro de bairro/cidade também são removidas por deslocarem os níveis. Sem cidade ou estado válidos a tag é omitida em vez de enviada incorreta
 - Preço zero deixou de ser enviado no XML: a v3.4.4 passou a aceitar zero em todos os campos numéricos, mas o OpenNavent não permite `<quantidade>0</quantidade>` no Brasil. Zero continua válido em vagas, banheiros, IPTU, idade e condomínio
+- Preço com máscara (`4.350.000,00`) virava `4` no `intval()` do feed — um imóvel de milhões era anunciado por alguns reais. Agora falha a validação com mensagem explicando o formato esperado, em vez de publicar o valor errado
+- **`<precos>` agora respeita `uqbhi_finalidade`:** só emite `VENTA`/`ALQUILER` quando a finalidade autoriza a operação. Antes, um imóvel de venda com `rent_price` preenchido publicava um anúncio de locação não intencional, consumindo crédito da imobiliária. Imóveis sem finalidade mapeável mantêm o comportamento anterior, guiado por preço — mas agora só com preço válido
+- **`uqbhi_get_tipo()` não cai mais num default silencioso:** ele usava o primeiro termo em ordem alfabética e, se aquele não resolvesse os IDs OpenNavent, caía num Apartamento (2/1) fixo, sem log — exportando o imóvel na categoria errada. Agora percorre todos os termos atribuídos e usa o primeiro que resolve
+- A regra de condomínio obrigatório nunca disparava para Casa de Condomínio: a validação procurava o slug `casa-de-condominio`, o seed cria `casa-condominio`
 - `<titulo>` passava por `esc_html()` dentro do CDATA, publicando entidades escapadas (`&amp;`) no portal
 - `codigoReferencia` tratava a referência `0` como vazia e caía no ID do post
 
@@ -28,6 +32,9 @@ O portal recusa anúncios com _"o imóvel foi modificado em outro processo ou ma
 - Validação de estado inválido e de título com menos de 10 caracteres (mínimo exigido pelo OpenNavent; antes o plugin aceitava 5)
 - A URL alternativa do feed (`/feed-imovelweb/`, que sempre existiu) agora aparece na tela do plugin, com aviso para cadastrar apenas uma das duas no portal
 - Rota REST do feed responde a `HEAD` além de `GET` — o portal valida o Content-Type antes de baixar
+- Validações novas: "Preço preenchido não corresponde à finalidade selecionada", "Preço em formato inválido" e "Tipo sem mapeamento OpenNavent" (imóvel fica fora do feed em vez de sair classificado errado)
+- Painel administrativo lista os termos de tipo sem mapeamento OpenNavent, com contagem e instrução de como resolver
+- Funções novas: `uqbhi_map_finalidade_term()`, `uqbhi_get_operacoes()`, `uqbhi_get_operacoes_publicaveis()`, `uqbhi_resolve_tipo_ids()`, `uqbhi_get_tipo_term()`, `uqbhi_build_localidade()`, `uqbhi_normalize_estado()`, `uqbhi_has_price()`, `uqbhi_data_modificacao()`
 
 ## [3.4.5] - 2026-04-30
 
