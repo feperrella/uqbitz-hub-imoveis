@@ -336,6 +336,39 @@ function uqbhi_page_main() {
 		echo '<p style="color:green;font-size:14px">✅ Todos os ' . esc_html( $total ) . ' imóveis publicados estão com os campos obrigatórios preenchidos e sincronizando no feed.</p>';
 	}
 
+	// Tipos que não mapeiam para nenhuma categoria OpenNavent.
+	$tipo_terms = get_terms(
+		array(
+			'taxonomy'   => 'uqbhi_tipo',
+			'hide_empty' => false,
+		)
+	);
+	$unmapped   = array();
+	if ( ! is_wp_error( $tipo_terms ) ) {
+		foreach ( $tipo_terms as $term ) {
+			if ( null === uqbhi_resolve_tipo_ids( $term ) ) {
+				$unmapped[] = $term;
+			}
+		}
+	}
+
+	if ( ! empty( $unmapped ) ) {
+		echo '<hr>';
+		echo '<h2>🏷️ Tipos sem mapeamento OpenNavent (' . esc_html( count( $unmapped ) ) . ')</h2>';
+		echo '<p>Estes termos da taxonomia <strong>Tipo</strong> não correspondem a nenhuma categoria dos portais. Imóveis que tenham <em>somente</em> um destes tipos <strong>não serão sincronizados</strong>.</p>';
+		echo '<table class="widefat striped" style="max-width:800px">';
+		echo '<thead><tr><th>Termo</th><th>Slug</th><th>Imóveis</th></tr></thead><tbody>';
+		foreach ( $unmapped as $term ) {
+			echo '<tr>';
+			echo '<td><strong>' . esc_html( $term->name ) . '</strong></td>';
+			echo '<td><code>' . esc_html( $term->slug ) . '</code></td>';
+			echo '<td>' . esc_html( $term->count ) . '</td>';
+			echo '</tr>';
+		}
+		echo '</tbody></table>';
+		echo '<p><strong>Como resolver:</strong> edite o termo em <a href="' . esc_url( admin_url( 'edit-tags.php?taxonomy=uqbhi_tipo&post_type=uqbhi_imovel' ) ) . '">Imóveis → Tipos</a> e defina como <strong>categoria superior</strong> um dos tipos oficiais (Casa, Apartamento, Terreno, Rural, Comercial). O termo passa a herdar o mapeamento do tipo escolhido. Como alternativa, troque o tipo dos imóveis afetados por um oficial.</p>';
+	}
+
 	echo '</div>';
 }
 

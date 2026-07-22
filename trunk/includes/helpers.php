@@ -64,37 +64,24 @@ function uqbhi_has_acf_pro_gallery() {
 }
 
 /**
- * Get the property type mapping for OpenNavent XML.
+ * Resolve the OpenNavent IDs carried by a single uqbhi_tipo term.
  *
  * Source of truth is the term meta set by the seed:
  *   - uqbhi_id_tipo     → OpenNavent idTipo
  *   - uqbhi_id_subtipo  → OpenNavent idSubTipo
  *
- * If the selected term is missing meta (e.g. user-created custom term), walks
- * up the hierarchy to inherit the nearest ancestor's IDs. The `nome` field is
- * always the root ancestor's term name (the OpenNavent category label).
+ * A term without meta (e.g. user-created custom term) inherits from the nearest
+ * ancestor that has it, so a custom child of an official type maps correctly.
  *
- * @param int $post_id The property post ID.
- * @return array Array with id, nome, and subtipo keys.
+ * @param WP_Term $term Term to resolve.
+ * @return array|null Array with id and subtipo keys, or null when neither the
+ *                    term nor any ancestor carries the meta.
  */
-function uqbhi_get_tipo( $post_id ) {
-	$default = array(
-		'id'      => '2',
-		'nome'    => 'Apartamento',
-		'subtipo' => '1',
-	);
-
-	$terms = wp_get_post_terms( $post_id, 'uqbhi_tipo' );
-	if ( empty( $terms ) || is_wp_error( $terms ) ) {
-		return $default;
-	}
-
-	$chosen = $terms[0];
-
-	// Walk up to find the nearest ancestor that has the OpenNavent meta set.
-	$walker     = $chosen;
+function uqbhi_resolve_tipo_ids( $term ) {
+	$walker     = $term;
 	$id_tipo    = get_term_meta( $walker->term_id, 'uqbhi_id_tipo', true );
 	$id_subtipo = get_term_meta( $walker->term_id, 'uqbhi_id_subtipo', true );
+
 	while ( '' === $id_tipo && $walker->parent > 0 ) {
 		$walker = get_term( $walker->parent, 'uqbhi_tipo' );
 		if ( ! $walker || is_wp_error( $walker ) ) {
@@ -105,11 +92,82 @@ function uqbhi_get_tipo( $post_id ) {
 	}
 
 	if ( '' === $id_tipo ) {
-		return $default;
+		return null;
+	}
+
+	return array(
+		'id'      => (string) $id_tipo,
+		'subtipo' => (string) $id_subtipo,
+	);
+}
+
+/**
+ * Pick the assigned uqbhi_tipo term that carries the OpenNavent mapping.
+ *
+ * Terms are considered in name order and the first one that resolves wins.
+ * Selecting by resolvability rather than by position matters when a property
+ * carries more than one type: a user-created term without meta (e.g.
+ * "Residencial") would otherwise shadow a mapped one purely because it sorts
+ * first, and the property would be exported under the wrong category.
+ *
+ * @param int $post_id The property post ID.
+ * @return array|null Array with term, id and subtipo keys, or null when no
+ *                    assigned term resolves to an OpenNavent mapping.
+ */
+function uqbhi_get_tipo_term( $post_id ) {
+	$terms = wp_get_post_terms(
+		$post_id,
+		'uqbhi_tipo',
+		array(
+			'orderby' => 'name',
+			'order'   => 'ASC',
+		)
+	);
+	if ( empty( $terms ) || is_wp_error( $terms ) ) {
+		return null;
+	}
+
+	foreach ( $terms as $term ) {
+		$ids = uqbhi_resolve_tipo_ids( $term );
+		if ( null !== $ids ) {
+			return array(
+				'term'    => $term,
+				'id'      => $ids['id'],
+				'subtipo' => $ids['subtipo'],
+			);
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Get the property type mapping for OpenNavent XML.
+ *
+ * The `nome` field is always the root ancestor's term name (the OpenNavent
+ * category label).
+ *
+ * @param int $post_id The property post ID.
+ * @return array Array with id, nome, and subtipo keys.
+ */
+function uqbhi_get_tipo( $post_id ) {
+	$resolved = uqbhi_get_tipo_term( $post_id );
+
+	if ( null === $resolved ) {
+		/*
+		 * Nothing resolved. uqbhi_validate_imovel() rejects these properties, so
+		 * the feed never reaches this branch — it only guards direct callers,
+		 * which is why it stays a value rather than an error.
+		 */
+		return array(
+			'id'      => '2',
+			'nome'    => 'Apartamento',
+			'subtipo' => '1',
+		);
 	}
 
 	// Root ancestor of the selected term — used as the OpenNavent "nome".
-	$root = $chosen;
+	$root = $resolved['term'];
 	while ( $root->parent > 0 ) {
 		$parent = get_term( $root->parent, 'uqbhi_tipo' );
 		if ( ! $parent || is_wp_error( $parent ) ) {
@@ -119,9 +177,9 @@ function uqbhi_get_tipo( $post_id ) {
 	}
 
 	return array(
-		'id'      => (string) $id_tipo,
+		'id'      => $resolved['id'],
 		'nome'    => $root->name,
-		'subtipo' => (string) $id_subtipo,
+		'subtipo' => $resolved['subtipo'],
 	);
 }
 
@@ -439,6 +497,16 @@ function uqbhi_validate_imovel( $post_id ) {
 	$tipos = wp_get_post_terms( $post_id, 'uqbhi_tipo', array( 'fields' => 'ids' ) );
 	if ( empty( $tipos ) || is_wp_error( $tipos ) ) {
 		$errors[] = 'Tipo do imóvel não selecionado';
+	} elseif ( null === uqbhi_get_tipo_term( $post_id ) ) {
+		/*
+		 * No assigned type maps to an OpenNavent category. Exporting anyway would
+		 * silently advertise the property under the wrong category, so it is held
+		 * back until the type is fixed.
+		 */
+		$nomes = wp_get_post_terms( $post_id, 'uqbhi_tipo', array( 'fields' => 'names' ) );
+		$lista = is_wp_error( $nomes ) ? '' : ' (' . implode( ', ', $nomes ) . ')';
+
+		$errors[] = 'Tipo sem mapeamento OpenNavent' . $lista . ' — selecione um tipo oficial ou torne este uma subcategoria de um';
 	}
 
 	// Finalidade (obrigatório).
@@ -484,7 +552,7 @@ function uqbhi_validate_imovel( $post_id ) {
 	$tipo_slugs  = wp_get_post_terms( $post_id, 'uqbhi_tipo', array( 'fields' => 'slugs' ) );
 	$needs_condo = false;
 	if ( ! is_wp_error( $tipo_slugs ) ) {
-		$condo_slugs = array( 'apartamento', 'studio', 'loft', 'flat', 'cobertura', 'duplex', 'triplex', 'garden', 'casa-de-condominio' );
+		$condo_slugs = array( 'apartamento', 'studio', 'loft', 'flat', 'cobertura', 'duplex', 'triplex', 'garden', 'casa-condominio' );
 		foreach ( $tipo_slugs as $slug ) {
 			if ( in_array( $slug, $condo_slugs, true ) ) {
 				$needs_condo = true;
