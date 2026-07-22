@@ -229,6 +229,7 @@ function uqbhi_sanitize_settings( $input ) {
 	if ( isset( $input['telefone_contato'] ) ) {
 		$sanitized['telefone_contato'] = sanitize_text_field( $input['telefone_contato'] );
 	}
+	$sanitized['forcar_atualizacao'] = empty( $input['forcar_atualizacao'] ) ? 0 : 1;
 	return $sanitized;
 }
 
@@ -281,6 +282,8 @@ function uqbhi_page_main() {
 	}
 	echo '<tr><td><strong>Código da imobiliária</strong></td><td>' . ( $codigo ? '<code>' . esc_html( $codigo ) . '</code>' : '<span style="color:red">⚠️ Não configurado — <a href="' . esc_url( admin_url( 'admin.php?page=uqbhi-settings' ) ) . '">preencher</a></span>' ) . '</td></tr>';
 	echo '<tr><td><strong>URL do Feed XML</strong></td><td><code><a href="' . esc_url( $feed_url ) . '" target="_blank">' . esc_html( $feed_url ) . '</a></code></td></tr>';
+	$feed_url_alt = home_url( '/' . UQBHI_FEED_SLUG . '/' );
+	echo '<tr><td><strong>URL alternativa</strong></td><td><code><a href="' . esc_url( $feed_url_alt ) . '" target="_blank">' . esc_html( $feed_url_alt ) . '</a></code><br><small>Serve o mesmo XML. Cadastre <strong>uma só</strong> das duas no portal e use sempre a mesma.</small></td></tr>';
 	echo '</table>';
 
 	// Instruções.
@@ -381,6 +384,15 @@ function uqbhi_page_settings() {
 		echo '<p class="description">' . esc_html( $f['desc'] ) . '</p>';
 		echo '</td></tr>';
 	}
+
+	$forcar = ! empty( $opts['forcar_atualizacao'] );
+	echo '<tr>';
+	echo '<th scope="row"><label for="forcar_atualizacao">Forçar atualização</label></th>';
+	echo '<td>';
+	echo '<label><input type="checkbox" id="forcar_atualizacao" name="uqbhi_settings[forcar_atualizacao]" value="1"' . checked( $forcar, true, false ) . ' /> O feed prevalece sobre edições feitas no painel do portal</label>';
+	echo '<p class="description">Marque se o WordPress é a única fonte dos anúncios. Contorna o erro <em>&ldquo;o imóvel foi modificado em outro processo ou manualmente e a carga não pode modificá-lo, pois a data do XML é anterior à mudança&rdquo;</em>, adiantando o <code>dataModificacao</code> do feed em 48h. <strong>Atenção:</strong> é um paliativo — ele mascara a causa real, e com a opção ligada qualquer alteração feita direto no painel do portal será sobrescrita na próxima carga.</p>';
+	echo '</td></tr>';
+
 	echo '</table>';
 	submit_button( 'Salvar Configurações' );
 	echo '</form></div>';

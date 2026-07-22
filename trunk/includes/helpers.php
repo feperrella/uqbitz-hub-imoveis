@@ -170,12 +170,14 @@ function uqbhi_clean_text( $text ) {
 }
 
 /**
- * Get location parts (bairro and cidade) for a property.
+ * Get location parts (bairro, cidade and estado) for a property.
  *
  * @param int $post_id The property post ID.
- * @return array Array with bairro and cidade keys.
+ * @return array Array with bairro, cidade and estado keys.
  */
 function uqbhi_get_localizacao_parts( $post_id ) {
+	$estado = get_field( 'estado', $post_id );
+
 	// Prioridade 1: campos ACF preenchidos via CEP.
 	$bairro = get_field( 'bairro', $post_id );
 	$cidade = get_field( 'cidade', $post_id );
@@ -183,6 +185,7 @@ function uqbhi_get_localizacao_parts( $post_id ) {
 		return array(
 			'bairro' => $bairro ? $bairro : '',
 			'cidade' => $cidade,
+			'estado' => $estado ? $estado : '',
 		);
 	}
 
@@ -194,6 +197,7 @@ function uqbhi_get_localizacao_parts( $post_id ) {
 		return array(
 			'bairro' => '',
 			'cidade' => '',
+			'estado' => $estado ? $estado : '',
 		);
 	}
 	foreach ( $terms as $t ) {
@@ -210,7 +214,150 @@ function uqbhi_get_localizacao_parts( $post_id ) {
 	return array(
 		'bairro' => $bairro,
 		'cidade' => $cidade,
+		'estado' => $estado ? $estado : '',
 	);
+}
+
+/**
+ * Build the OpenNavent `<localidade>` string: Bairro,Cidade,Estado,País.
+ *
+ * The portal resolves the string from right to left, so a missing bairro is
+ * tolerated but a wrong/missing estado makes the whole location invalid
+ * ("O imóvel não tem uma cidade válida"). Commas inside a part would shift
+ * every following level, so they are stripped.
+ *
+ * @param array $parts Output of uqbhi_get_localizacao_parts().
+ * @return string Localidade string, or empty when it cannot be resolved.
+ */
+function uqbhi_build_localidade( $parts ) {
+	$bairro = uqbhi_clean_loc_part( isset( $parts['bairro'] ) ? $parts['bairro'] : '' );
+	$cidade = uqbhi_clean_loc_part( isset( $parts['cidade'] ) ? $parts['cidade'] : '' );
+	$estado = uqbhi_normalize_estado( isset( $parts['estado'] ) ? $parts['estado'] : '' );
+
+	// Sem cidade ou sem estado a string vira ambígua — melhor não enviar.
+	if ( '' === $cidade || '' === $estado ) {
+		return '';
+	}
+
+	$pieces = array();
+	if ( '' !== $bairro ) {
+		$pieces[] = $bairro;
+	}
+	$pieces[] = $cidade;
+	$pieces[] = $estado;
+	$pieces[] = 'Brasil';
+
+	return implode( ',', $pieces );
+}
+
+/**
+ * Normalize a location part — trim and drop commas (the OpenNavent separator).
+ *
+ * @param string $value Raw part.
+ * @return string Cleaned part.
+ */
+function uqbhi_clean_loc_part( $value ) {
+	return trim( str_replace( ',', ' ', (string) $value ) );
+}
+
+/**
+ * Normalize a Brazilian state to the full name expected by OpenNavent.
+ *
+ * Accepts both the UF code (SP) and the full name (São Paulo).
+ *
+ * @param string $estado Raw state value.
+ * @return string Full state name, or empty string when unknown.
+ */
+function uqbhi_normalize_estado( $estado ) {
+	$estado = trim( (string) $estado );
+	if ( '' === $estado ) {
+		return '';
+	}
+
+	$ufs = array(
+		'AC' => 'Acre',
+		'AL' => 'Alagoas',
+		'AP' => 'Amapá',
+		'AM' => 'Amazonas',
+		'BA' => 'Bahia',
+		'CE' => 'Ceará',
+		'DF' => 'Distrito Federal',
+		'ES' => 'Espírito Santo',
+		'GO' => 'Goiás',
+		'MA' => 'Maranhão',
+		'MT' => 'Mato Grosso',
+		'MS' => 'Mato Grosso do Sul',
+		'MG' => 'Minas Gerais',
+		'PA' => 'Pará',
+		'PB' => 'Paraíba',
+		'PR' => 'Paraná',
+		'PE' => 'Pernambuco',
+		'PI' => 'Piauí',
+		'RJ' => 'Rio de Janeiro',
+		'RN' => 'Rio Grande do Norte',
+		'RS' => 'Rio Grande do Sul',
+		'RO' => 'Rondônia',
+		'RR' => 'Roraima',
+		'SC' => 'Santa Catarina',
+		'SP' => 'São Paulo',
+		'SE' => 'Sergipe',
+		'TO' => 'Tocantins',
+	);
+
+	$upper = mb_strtoupper( $estado );
+	if ( isset( $ufs[ $upper ] ) ) {
+		return $ufs[ $upper ];
+	}
+
+	// Já é o nome por extenso (ViaCEP devolve "São Paulo" no campo `estado`).
+	return uqbhi_clean_loc_part( $estado );
+}
+
+/**
+ * Build the feed-level `dataModificacao` value (Unix timestamp, milliseconds).
+ *
+ * The portal compares this timestamp against the last change made to each ad
+ * via API or via the ImovelWeb panel: if the XML is older, the ad is rejected
+ * with "a data do XML é anterior à mudança". The margin below (in seconds) can
+ * be used to make the XML always win over panel edits.
+ *
+ * Formatted with `sprintf` rather than cast to int: `round()` returns a float,
+ * and a 13-digit float is rendered in scientific notation (1.7847E+12) when the
+ * host sets `precision` below 13, while an int cast overflows on 32-bit builds.
+ * Arithmetic stays in float, which is exact for integers well past year 2286.
+ *
+ * @return string Timestamp in milliseconds, digits only.
+ */
+function uqbhi_data_modificacao() {
+	$margem = (int) apply_filters( 'uqbhi_data_modificacao_margem', uqbhi_get_margem_seguranca() );
+	$agora  = round( ( microtime( true ) + $margem ) * 1000 );
+
+	// Nunca andar para trás. Se o portal guardar o valor recebido, desligar a
+	// margem faria as cargas seguintes perderem a comparação até o relógio
+	// alcançar o último valor emitido.
+	$ultimo = (float) get_option( 'uqbhi_ultima_data_modificacao', 0 );
+	if ( $ultimo >= $agora ) {
+		$agora = $ultimo + 1;
+	}
+
+	// Só persiste enquanto a margem está ativa — é o único caso que cria a
+	// dívida a ser paga depois. Sem margem, o relógio já é monotônico.
+	if ( $margem > 0 ) {
+		update_option( 'uqbhi_ultima_data_modificacao', sprintf( '%.0f', $agora ), false );
+	}
+
+	return sprintf( '%.0f', $agora );
+}
+
+/**
+ * Safety margin (in seconds) added to the feed's dataModificacao.
+ *
+ * @return int Margin in seconds. Zero when the option is off.
+ */
+function uqbhi_get_margem_seguranca() {
+	$settings = get_option( 'uqbhi_settings', array() );
+
+	return ! empty( $settings['forcar_atualizacao'] ) ? DAY_IN_SECONDS * 2 : 0;
 }
 
 /**
@@ -252,8 +399,8 @@ function uqbhi_extract_cep( $location ) {
 function uqbhi_validate_imovel( $post_id ) {
 	$errors = array();
 	$title  = get_the_title( $post_id );
-	if ( mb_strlen( $title ) < 5 ) {
-		$errors[] = 'Título muito curto (mín. 5 caracteres)';
+	if ( mb_strlen( $title ) < 10 ) {
+		$errors[] = 'Título muito curto (mín. 10 caracteres)';
 	}
 
 	$desc = get_field( 'descricao', $post_id );
@@ -266,8 +413,20 @@ function uqbhi_validate_imovel( $post_id ) {
 
 	$sell = get_field( 'sell_price', $post_id );
 	$rent = get_field( 'rent_price', $post_id );
-	if ( ! uqbhi_has_value( $sell ) && ! uqbhi_has_value( $rent ) ) {
-		$errors[] = 'Preço de venda ou locação obrigatório';
+	if ( ! uqbhi_has_price( $sell ) && ! uqbhi_has_price( $rent ) ) {
+		// Preço com máscara ("4.350.000,00") vira 4 no intval() do feed — publicar
+		// assim anuncia um imóvel de milhões por alguns reais. Falhar alto.
+		$mal_formatados = array();
+		foreach ( array( $sell, $rent ) as $valor ) {
+			if ( uqbhi_has_value( $valor ) && ! is_numeric( $valor ) ) {
+				$mal_formatados[] = $valor;
+			}
+		}
+		if ( ! empty( $mal_formatados ) ) {
+			$errors[] = 'Preço em formato inválido (' . implode( ', ', $mal_formatados ) . ') — informe só números, sem ponto ou vírgula';
+		} else {
+			$errors[] = 'Preço de venda ou locação obrigatório (maior que zero)';
+		}
 	}
 
 	$gallery   = get_field( 'galeria_de_imagens', $post_id );
@@ -303,6 +462,8 @@ function uqbhi_validate_imovel( $post_id ) {
 	}
 	if ( empty( get_field( 'estado', $post_id ) ) ) {
 		$errors[] = 'Estado não preenchido';
+	} elseif ( '' === uqbhi_normalize_estado( get_field( 'estado', $post_id ) ) ) {
+		$errors[] = 'Estado inválido (use a UF ou o nome por extenso)';
 	}
 
 	if ( ! uqbhi_has_value( get_field( 'metreage', $post_id ) ) ) {
@@ -355,4 +516,17 @@ function uqbhi_has_value( $value ) {
 	}
 
 	return null !== $value;
+}
+
+/**
+ * Check whether a price field can be sent to the portal.
+ *
+ * Unlike the other numeric fields, zero is not a valid price in Brazil —
+ * OpenNavent rejects `<quantidade>0</quantidade>` for BR portals.
+ *
+ * @param mixed $value Price field value.
+ * @return bool
+ */
+function uqbhi_has_price( $value ) {
+	return uqbhi_has_value( $value ) && is_numeric( $value ) && intval( $value ) > 0;
 }

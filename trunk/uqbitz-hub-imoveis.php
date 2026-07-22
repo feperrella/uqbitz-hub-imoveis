@@ -3,7 +3,7 @@
  * Plugin Name: UQBITZ Hub de Integracao Imobiliaria
  * Plugin URI:  https://github.com/feperrella/uqbitz-hub-imoveis
  * Description: Generates an OpenNavent XML feed to sync WordPress property listings with real estate portals (ImovelWeb, Wimoveis, Casa Mineira).
- * Version:     3.4.5
+ * Version:     3.4.6
  * Author:      Fernando Perrella (UQBITZ)
  * Author URI:  https://uqbitz.com
  * License:     GPL-2.0+
@@ -52,7 +52,7 @@ function uqbhi_check_acf_dependency() {
 /*
  * CONSTANTES.
  */
-define( 'UQBHI_VERSION', '3.4.5' );
+define( 'UQBHI_VERSION', '3.4.6' );
 define( 'UQBHI_FEED_SLUG', 'feed-imovelweb' );
 define( 'UQBHI_BEARER_TOKEN', '259313f5-2c84-4f6c-bd2c-eabad2a8bc83' );
 define( 'UQBHI_PATH', plugin_dir_path( __FILE__ ) );

@@ -5,6 +5,30 @@ Todas as mudanças notáveis do plugin UQBITZ Hub de Integração Imobiliária s
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 e este projeto segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [3.4.6] - 2026-07-22
+
+### Corrigido
+- **Erro "o imóvel não tem uma cidade válida / localização válida":** o estado era fixo como `São Paulo` na tag `<localidade>`, ignorando o campo ACF `estado`. Imóveis de outros estados eram enviados com a localização errada. Agora o estado real é usado, com normalização de UF (`PR`) para nome por extenso (`Paraná`)
+- `<localidade>` não é mais montada com `array_filter`, que deslocava as posições `Bairro,Cidade,Estado,País` quando uma parte estava vazia; vírgulas dentro de bairro/cidade também são removidas por deslocarem os níveis. Sem cidade ou estado válidos a tag é omitida em vez de enviada incorreta
+- Preço zero deixou de ser enviado no XML: a v3.4.4 passou a aceitar zero em todos os campos numéricos, mas o OpenNavent não permite `<quantidade>0</quantidade>` no Brasil. Zero continua válido em vagas, banheiros, IPTU, idade e condomínio
+- `<titulo>` passava por `esc_html()` dentro do CDATA, publicando entidades escapadas (`&amp;`) no portal
+- `codigoReferencia` tratava a referência `0` como vazia e caía no ID do post
+
+### Blindagem do `dataModificacao`
+
+O portal recusa anúncios com _"o imóvel foi modificado em outro processo ou manualmente… a data do XML é anterior à mudança"_. **A causa raiz não está confirmada** — ela depende de dados que só o suporte do portal e o servidor do cliente têm. Esta versão elimina todos os caminhos pelos quais o plugin poderia contribuir para o problema:
+
+- O feed era servido com `Cache-Control: public, max-age=3600`. Se qualquer camada de cache (CDN, LiteSpeed, Nginx, Varnish) entregasse ao portal um XML antigo, o `dataModificacao` chegaria anterior às alterações já registradas. Agora o feed envia `no-cache`/`no-store`, define `DONOTCACHEPAGE` **antes** de descartar os buffers de saída (o LiteSpeed decide o header dele no callback do buffer) e dispara `litespeed_control_set_nocache`
+- `dataModificacao` era gerado com `round()`, que devolve float: com `precision` abaixo de 13 no php.ini o timestamp saía em notação científica (`1.7847E+12`). Agora é formatado com `sprintf( '%.0f', … )`, imune tanto ao `precision` quanto ao overflow de inteiro em builds 32-bit
+- O valor emitido é monotônico: nunca retrocede em relação ao último enviado, mesmo que a margem de segurança seja desligada
+- Canário no gerador: se o `dataModificacao` sair com qualquer caractere não numérico, o feed grava no `error_log`
+
+### Adicionado
+- Configuração **Forçar atualização**: faz o feed prevalecer sobre edições feitas direto no painel do portal, adicionando margem de segurança ao `dataModificacao`. Ajustável pelo filtro `uqbhi_data_modificacao_margem`
+- Validação de estado inválido e de título com menos de 10 caracteres (mínimo exigido pelo OpenNavent; antes o plugin aceitava 5)
+- A URL alternativa do feed (`/feed-imovelweb/`, que sempre existiu) agora aparece na tela do plugin, com aviso para cadastrar apenas uma das duas no portal
+- Rota REST do feed responde a `HEAD` além de `GET` — o portal valida o Content-Type antes de baixar
+
 ## [3.4.5] - 2026-04-30
 
 ### Adicionado

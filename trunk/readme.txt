@@ -3,7 +3,7 @@ Contributors: feperrella
 Tags: real-estate, xml, feed, property, opennavent
 Requires at least: 6.5
 Tested up to: 6.9
-Stable tag: 3.4.5
+Stable tag: 3.4.6
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -102,6 +102,15 @@ No. The XML feed is a public URL consumed by the portal. You only need the agenc
 
 == Changelog ==
 
+= 3.4.6 =
+* Fixed: portal error "o imóvel não tem uma cidade válida / localização válida" — the state was hardcoded to `São Paulo` in `<localidade>`, ignoring the ACF `estado` field. The real state is now used, with UF (`PR`) normalized to the full name (`Paraná`)
+* Hardened `dataModificacao` against the portal error "a data do XML é anterior à mudança". The root cause is not confirmed — it depends on data only the portal support and the client server hold — so this release closes every path by which the plugin could contribute: the feed was cacheable (`Cache-Control: public, max-age=3600`) and now sends `no-cache`/`no-store`, sets `DONOTCACHEPAGE` before discarding output buffers and fires `litespeed_control_set_nocache`; the timestamp is formatted with `sprintf('%.0f')` instead of `round()`, immune to a low `precision` ini and to 32-bit int overflow; the emitted value is monotonic and never moves backwards; and a canary logs any non-numeric value
+* Fixed: `<localidade>` is no longer assembled with `array_filter`, which shifted the `Bairro,Cidade,Estado,País` positions when a part was empty; commas inside a part are stripped for the same reason
+* Fixed: zero prices are no longer sent — OpenNavent does not accept `<quantidade>0</quantidade>` in Brazil. Zero remains valid for parking, bathrooms, IPTU, age and condo fee
+* Fixed: `<titulo>` ran through `esc_html()` inside CDATA, publishing escaped entities (`&amp;`) on the portal
+* Added: "Forçar atualização" setting — makes the feed win over edits made directly in the portal panel. Tunable via the `uqbhi_data_modificacao_margem` filter
+* Added: validation for invalid state and for titles shorter than 10 characters (the OpenNavent minimum; the plugin previously accepted 5)
+
 = 3.4.5 =
 * Added: Elementor Dynamic Tags integration — exposes the imóvel image gallery and floor plans as a "Hub Imóveis" group inside the Elementor variable picker, so editors can bind galleries on widgets without ACF Pro
 * Added: ACF-style format value filters in the gallery fallback (`acf/format_value/name=galeria_de_imagens` and `…/plantas`) — third-party integrations that read these fields via ACF now receive the same array-of-attachment-objects shape that ACF Pro emits
@@ -176,6 +185,9 @@ No. The XML feed is a public URL consumed by the portal. You only need the agenc
 * Initial release: single-file plugin rewrite with REST API XML feed
 
 == Upgrade Notice ==
+
+= 3.4.6 =
+Fixes ads rejected by ImovelWeb for an invalid city/location — the state was hardcoded to São Paulo instead of using the property's own — and stops sending zero prices, which Brazil does not accept. Also hardens `dataModificacao` against every plugin-side cause of "a data do XML é anterior à mudança": the feed is no longer cacheable and the timestamp is immune to php.ini `precision` and 32-bit overflow.
 
 = 3.4.5 =
 Adds Elementor Dynamic Tags for the imóvel image gallery and floor plans, plus ACF-style format-value filters so external integrations consume the fallback gallery exactly like ACF Pro.

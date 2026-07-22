@@ -49,7 +49,7 @@ function uqbhi_register_rest_route() {
 		'uqbhi/v1',
 		'/feed',
 		array(
-			'methods'             => 'GET',
+			'methods'             => array( 'GET', 'HEAD' ),
 			'callback'            => 'uqbhi_rest_callback',
 			'permission_callback' => '__return_true',
 		)
@@ -62,13 +62,49 @@ function uqbhi_register_rest_route() {
  * @param WP_REST_Request $request The REST request object.
  */
 function uqbhi_rest_callback( $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+	uqbhi_disable_page_cache();
 	while ( ob_get_level() ) {
 		ob_end_clean(); }
-	header( 'Content-Type: application/xml; charset=utf-8' );
-	header( 'Cache-Control: public, max-age=3600' );
-	header( 'X-Robots-Tag: noindex, nofollow' );
+	uqbhi_send_feed_headers();
 	echo uqbhi_generate_xml(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- XML feed output
 	exit;
+}
+
+/**
+ * Opt the request out of every page-cache layer.
+ *
+ * Must run *before* the pending output buffers are discarded: `ob_end_clean()`
+ * fires the buffer callbacks, and LiteSpeed Cache decides (and locks) its
+ * `X-LiteSpeed-Cache-Control` header inside that callback. Defining the
+ * constants afterwards would be too late to be seen.
+ */
+function uqbhi_disable_page_cache() {
+	// Sinalizar para plugins de cache de página (WP Rocket, W3TC, LiteSpeed…).
+	foreach ( array( 'DONOTCACHEPAGE', 'DONOTCACHEOBJECT', 'DONOTCACHEDB' ) as $const ) {
+		if ( ! defined( $const ) ) {
+			define( $const, true );
+		}
+	}
+
+	// LiteSpeed Cache ignora DONOTCACHEPAGE; usa a própria API.
+	do_action( 'litespeed_control_set_nocache', 'feed XML uqbhi' );
+}
+
+/**
+ * Send the feed HTTP headers.
+ *
+ * The feed carries a `dataModificacao` timestamp that the portal compares
+ * against the last manual/API change of each ad: a cached (stale) XML makes
+ * the portal reject the ads with "a data do XML é anterior à mudança". The
+ * feed must therefore always be generated fresh.
+ */
+function uqbhi_send_feed_headers() {
+	header( 'Content-Type: application/xml; charset=utf-8' );
+	header( 'Cache-Control: no-cache, no-store, must-revalidate, max-age=0' );
+	header( 'Pragma: no-cache' );
+	header( 'Expires: Wed, 11 Jan 1984 05:00:00 GMT' );
+	header( 'X-Accel-Expires: 0' );
+	header( 'X-Robots-Tag: noindex, nofollow' );
 }
 
 /*
@@ -84,15 +120,14 @@ function uqbhi_serve_feed() {
 		return;
 	}
 
+	uqbhi_disable_page_cache();
+
 	// Limpar qualquer buffer pendente.
 	while ( ob_get_level() ) {
 		ob_end_clean();
 	}
 
-	// Headers.
-	header( 'Content-Type: application/xml; charset=utf-8' );
-	header( 'Cache-Control: public, max-age=3600' );
-	header( 'X-Robots-Tag: noindex, nofollow' );
+	uqbhi_send_feed_headers();
 
 	// Gerar e enviar.
 	echo uqbhi_generate_xml(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- XML feed output
@@ -113,9 +148,16 @@ function uqbhi_generate_xml() {
 		)
 	);
 
+	// Canário: qualquer coisa que não seja dígito puro faz o portal ler o feed
+	// como anterior a toda alteração dos anúncios e recusar a carga inteira.
+	$data_modificacao = uqbhi_data_modificacao();
+	if ( ! ctype_digit( $data_modificacao ) ) {
+		error_log( '[uqbhi] dataModificacao inválido no feed: ' . $data_modificacao ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	}
+
 	$xml  = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
 	$xml .= '<OpenNavent>' . "\n";
-	$xml .= '  <dataModificacao>' . uqbhi_cdata( round( microtime( true ) * 1000 ) ) . '</dataModificacao>' . "\n";
+	$xml .= '  <dataModificacao>' . uqbhi_cdata( $data_modificacao ) . '</dataModificacao>' . "\n";
 	$xml .= '  <Imoveis>' . "\n";
 
 	foreach ( $posts as $post ) {
@@ -172,15 +214,9 @@ function uqbhi_render_imovel( $post ) {
 	// Tipo de propriedade.
 	$tipo = uqbhi_get_tipo( $id );
 
-	// Operação (Venta/Alquiler).
-	$operacao = uqbhi_get_operacao( $id );
-
 	// Localidade no formato: Bairro,Cidade,Estado,País.
-	$loc_parts        = uqbhi_get_localizacao_parts( $id );
-	$bairro           = $loc_parts['bairro'];
-	$cidade           = $loc_parts['cidade'];
-	$localidade_parts = array_filter( array( $bairro, $cidade, 'São Paulo', 'Brasil' ) );
-	$localidade       = implode( ',', $localidade_parts );
+	$loc_parts  = uqbhi_get_localizacao_parts( $id );
+	$localidade = uqbhi_build_localidade( $loc_parts );
 
 	// Montar endereço: rua + número + complemento.
 	$endereco = rtrim( trim( $location ), ',' );
@@ -197,7 +233,7 @@ function uqbhi_render_imovel( $post ) {
 	// Montar XML do imóvel.
 	$x  = '    <Imovel>' . "\n";
 	$x .= '      <codigoAnuncio>' . uqbhi_cdata( $id ) . '</codigoAnuncio>' . "\n";
-	$x .= '      <codigoReferencia>' . uqbhi_cdata( $referencia ? $referencia : $id ) . '</codigoReferencia>' . "\n";
+	$x .= '      <codigoReferencia>' . uqbhi_cdata( uqbhi_has_value( $referencia ) ? $referencia : $id ) . '</codigoReferencia>' . "\n";
 
 	// Tipo.
 	$x .= '      <tipoPropriedade>' . "\n";
@@ -209,19 +245,19 @@ function uqbhi_render_imovel( $post ) {
 	$x .= '      </tipoPropriedade>' . "\n";
 
 	// Título e descrição.
-	$x .= '      <titulo>' . uqbhi_cdata( mb_substr( esc_html( $post->post_title ), 0, 80 ) ) . '</titulo>' . "\n";
+	$x .= '      <titulo>' . uqbhi_cdata( mb_substr( uqbhi_clean_text( $post->post_title ), 0, 80 ) ) . '</titulo>' . "\n";
 	$x .= '      <descricao>' . uqbhi_cdata( uqbhi_clean_text( $descricao ) ) . '</descricao>' . "\n";
 
 	// Preços.
 	$x .= '      <precos>' . "\n";
-	if ( uqbhi_has_value( $sell_price ) ) {
+	if ( uqbhi_has_price( $sell_price ) ) {
 		$x .= '        <preco>' . "\n";
 		$x .= '          <quantidade>' . uqbhi_cdata( intval( $sell_price ) ) . '</quantidade>' . "\n";
 		$x .= '          <moeda>' . uqbhi_cdata( 'BRL' ) . '</moeda>' . "\n";
 		$x .= '          <operacao>' . uqbhi_cdata( 'VENTA' ) . '</operacao>' . "\n";
 		$x .= '        </preco>' . "\n";
 	}
-	if ( uqbhi_has_value( $rent_price ) ) {
+	if ( uqbhi_has_price( $rent_price ) ) {
 		$x .= '        <preco>' . "\n";
 		$x .= '          <quantidade>' . uqbhi_cdata( intval( $rent_price ) ) . '</quantidade>' . "\n";
 		$x .= '          <moeda>' . uqbhi_cdata( 'BRL' ) . '</moeda>' . "\n";
@@ -257,7 +293,9 @@ function uqbhi_render_imovel( $post ) {
 	// Localização.
 	$x .= '      <localizacao>' . "\n";
 	$x .= '        <endereco>' . uqbhi_cdata( $endereco ) . '</endereco>' . "\n";
-	$x .= '        <localidade>' . uqbhi_cdata( $localidade ) . '</localidade>' . "\n";
+	if ( $localidade ) {
+		$x .= '        <localidade>' . uqbhi_cdata( $localidade ) . '</localidade>' . "\n";
+	}
 	if ( $cep ) {
 		$x .= '        <codigoPostal>' . uqbhi_cdata( $cep ) . '</codigoPostal>' . "\n";
 	}
