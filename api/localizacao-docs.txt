@@ -1,0 +1,144 @@
+Localização
+Para definir a localização do imóvel, utilizar <localizacao>.
+Endereço
+Mostrado somente se solicitar mostrar o mapa. Valor string.
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenNavent>
+  <dataModificacao><![CDATA[1764583681966]]></dataModificacao>
+  <Imoveis>
+    <Imovel>
+      <localizacao>
+        <endereco>Guayaquil 300</endereco>
+      </localizacao>
+    </Imovel>
+  </Imoveis>
+</OpenNavent>
+
+ID Localidade
+Valor string. Consultar /v1/ubicaciones e /v1/ubicaciones/{idubicacion}/.
+Ejemplo de resposta parcial:
+[
+  { "id": "V1-B-1", "nombre": "Buenos Aires (fuera de GBA)", "nombreCompleto": "Buenos Aires (fuera de GBA),Argentina" },
+  { "id": "V1-B-2000", "nombre": "Buenos Aires Costa Atlántica", "nombreCompleto": "Buenos Aires Costa Atlántica,Argentina" },
+  { "id": "V1-B-6", "nombre": "Capital Federal", "nombreCompleto": "Capital Federal,Argentina" }
+]
+IDs com “B” são nível província/estado.
+Não é possível usar nível “B” para publicar. É obrigatório usar nível cidade “C” ou inferior.
+🚨 O idLocalidade deve ser de nível C ou inferior (D ou E se existir).
+Exemplo para obter “C” a partir de “B”:
+{
+  "id": "V1-B-6",
+  "nombre": "Capital Federal",
+  "nombreCompleto": "Capital Federal,Argentina",
+  "localidades": [
+    { "id": "V1-C-1003661", "nombre": "Abasto", "nombreCompleto": "Abasto,Capital Federal,Argentina" },
+    { "id": "V1-C-1003700", "nombre": "Agronomía", "nombreCompleto": "Agronomía,Capital Federal,Argentina" }
+  ]
+}
+Exemplo de uso:
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenNavent>
+  <dataModificacao><![CDATA[1764583681966]]></dataModificacao>
+  <Imoveis>
+    <Imovel>
+      <localizacao>
+        <endereco>Lavalle 3400, Abasto, Capital Federal</endereco>
+        <idLocalidade>V1-C-1003661</idLocalidade>
+      </localizacao>
+    </Imovel>
+  </Imoveis>
+</OpenNavent>
+Localidade
+Permite indicar a localidade como string completa. Se enviar <localidade>, não é necessário <idLocalidade>.
+Se ambos forem enviados, priorizamos idLocalidade.
+⚠️ Use vírgulas para separar Bairro, Cidade, Estado, País.
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenNavent>
+  <dataModificacao><![CDATA[1764583681966]]></dataModificacao>
+  <Imoveis>
+    <Imovel>
+      <localizacao>
+        <endereco>Aldama 6227</endereco>
+        <idLocalidade>V1-D-66623</idLocalidade>
+        <localidade>Tepetzingo,Emiliano Zapata,Morelos,Mexico</localidade>
+        <mostrarMapa>EXACTO</mostrarMapa>
+        <latitude>-34.6216993</latitude>
+        <longitude>58.4413393</longitude>
+      </localizacao>
+    </Imovel>
+  </Imoveis>
+</OpenNavent>
+Código Postal
+
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenNavent>
+  <dataModificacao><![CDATA[1764583681966]]></dataModificacao>
+  <Imoveis>
+    <Imovel>
+      <localizacao>
+        <endereco>Guayaquil 300</endereco>
+        <idLocalidade>1251</idLocalidade>
+        <codigoPostal>1426</codigoPostal>
+      </localizacao>
+    </Imovel>
+  </Imoveis>
+</OpenNavent>
+Mostrar Mapa
+Valores possíveis:
+	•	NO
+	•	EXACTO
+	•	APROXIMADO
+
+Consultar /v1/ubicaciones/ e /v1/mapa/visibilidad.
+Ver maior detalhe em “Mostrar localização no mapa”.
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenNavent>
+  <dataModificacao><![CDATA[1764583681966]]></dataModificacao>
+  <Imoveis>
+    <Imovel>
+      <localizacao>
+        <endereco>Guayaquil 300</endereco>
+        <idLocalidade>1251</idLocalidade>
+        <mostrarMapa>EXACTO</mostrarMapa>
+      </localizacao>
+    </Imovel>
+  </Imoveis>
+</OpenNavent>
+Longitude
+🚨 Valores válidos entre -180 e 180.
+
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenNavent>
+  <dataModificacao><![CDATA[1764583681966]]></dataModificacao>
+  <Imoveis>
+    <Imovel>
+      <localizacao>
+        <endereco>Aldama 6227</endereco>
+        <idLocalidade>V1-D-66623</idLocalidade>
+        <localidade>Tepetzingo,Emiliano Zapata,Morelos,Mexico</localidade>
+        <mostrarMapa>EXACTO</mostrarMapa>
+        <latitude>-34.6216993</latitude>
+        <longitude>58.4413393</longitude>
+      </localizacao>
+    </Imovel>
+  </Imoveis>
+</OpenNavent>
+Latitude
+🚨 Valores válidos entre -90 e 90.
+
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenNavent>
+  <dataModificacao><![CDATA[1764583681966]]></dataModificacao>
+  <Imoveis>
+    <Imovel>
+      <localizacao>
+        <endereco>Aldama 6227</endereco>
+        <idLocalidade>V1-D-66623</idLocalidade>
+        <localidade>Tepetzingo,Emiliano Zapata,Morelos,Mexico</localidade>
+        <mostrarMapa>EXACTO</mostrarMapa>
+        <latitude>-34.6216993</latitude>
+        <longitude>58.4413393</longitude>
+      </localizacao>
+    </Imovel>
+  </Imoveis>
+</OpenNavent>
